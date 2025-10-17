@@ -1,0 +1,265 @@
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { 
+  Heart, 
+  MessageSquare, 
+  Calendar, 
+  TrendingUp, 
+  Users,
+  DollarSign,
+  Newspaper,
+  ArrowRight
+} from "lucide-react";
+import heroImage from "@/assets/hero-community.jpg";
+
+const highlights = [
+  {
+    title: "Community Borehole Project",
+    amount: "KSh 450,000 / KSh 800,000",
+    progress: 56,
+    category: "Water",
+  },
+  {
+    title: "Youth Training Center",
+    amount: "KSh 280,000 / KSh 500,000",
+    progress: 56,
+    category: "Education",
+  },
+];
+
+const recentNews = [
+  {
+    title: "MCA Announces New Road Construction Plans",
+    category: "Development",
+    date: "2 hours ago",
+    urgent: false,
+  },
+  {
+    title: "Community Health Camp - This Saturday",
+    category: "Health",
+    date: "5 hours ago",
+    urgent: true,
+  },
+  {
+    title: "Borehole Project Update: 60% Complete",
+    category: "Water",
+    date: "1 day ago",
+    urgent: false,
+  },
+];
+
+const upcomingEvents = [
+  { title: "Ward Leaders Meeting", date: "Tomorrow, 2PM", location: "Chief's Camp" },
+  { title: "Youth Football Tournament", date: "Saturday, 9AM", location: "Community Grounds" },
+  { title: "Women's Group Fundraiser", date: "Next Tuesday, 3PM", location: "Mbakalo Market" },
+];
+
+export default function Home() {
+  return (
+    <div>
+      {/* Hero Section */}
+      <section className="relative h-[500px] overflow-hidden">
+        <img 
+          src={heroImage} 
+          alt="Mbakalo Community" 
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/90 to-primary/70" />
+        <div className="relative container mx-auto px-4 h-full flex flex-col justify-center">
+          <h1 className="text-4xl md:text-6xl font-bold text-primary-foreground mb-4">
+            Welcome to Mbakalo Ward
+          </h1>
+          <p className="text-xl text-primary-foreground/90 mb-8 max-w-2xl">
+            Your digital home for community updates, transparent development, and staying connected.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Button size="lg" variant="secondary" asChild>
+              <Link to="/fundraising">
+                <DollarSign className="mr-2 h-5 w-5" />
+                Donate via M-Pesa
+              </Link>
+            </Button>
+            <Button size="lg" variant="outline" className="bg-white/10 border-white text-white hover:bg-white/20" asChild>
+              <Link to="/news">
+                <Newspaper className="mr-2 h-5 w-5" />
+                Latest News
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Quick Stats */}
+      <section className="container mx-auto px-4 -mt-12 relative z-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+            { icon: Users, label: "Active Members", value: "2,450+", color: "bg-primary" },
+            { icon: DollarSign, label: "Funds Raised", value: "KSh 1.2M", color: "bg-secondary" },
+            { icon: TrendingUp, label: "Projects Active", value: "8", color: "bg-accent" },
+            { icon: Calendar, label: "Events This Month", value: "12", color: "bg-primary-light" },
+          ].map((stat, index) => (
+            <Card key={index} className="shadow-medium">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <div className={`${stat.color} p-3 rounded-lg`}>
+                    <stat.icon className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{stat.value}</p>
+                    <p className="text-sm text-muted-foreground">{stat.label}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </section>
+
+      {/* Active Fundraising Projects */}
+      <section className="container mx-auto px-4 py-16">
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h2 className="text-3xl font-bold mb-2">Active Projects</h2>
+            <p className="text-muted-foreground">Support our community development initiatives</p>
+          </div>
+          <Button variant="outline" asChild>
+            <Link to="/fundraising">
+              View All <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {highlights.map((project, index) => (
+            <Card key={index} className="shadow-medium hover:shadow-strong transition-shadow">
+              <CardHeader>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle>{project.title}</CardTitle>
+                    <CardDescription>Category: {project.category}</CardDescription>
+                  </div>
+                  <Badge className="bg-gradient-primary">{project.progress}%</Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex justify-between text-sm mb-2">
+                      <span className="text-muted-foreground">Progress</span>
+                      <span className="font-semibold">{project.amount}</span>
+                    </div>
+                    <div className="h-3 bg-muted rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-gradient-primary transition-all duration-500"
+                        style={{ width: `${project.progress}%` }}
+                      />
+                    </div>
+                  </div>
+                  <Button className="w-full bg-gradient-primary" asChild>
+                    <Link to="/fundraising">Contribute Now</Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </section>
+
+      {/* Recent News & Events Grid */}
+      <section className="bg-muted py-16">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Recent News */}
+            <div>
+              <h2 className="text-3xl font-bold mb-6">Recent News</h2>
+              <div className="space-y-4">
+                {recentNews.map((news, index) => (
+                  <Card key={index} className="shadow-soft hover:shadow-medium transition-shadow">
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Badge variant={news.urgent ? "destructive" : "secondary"}>
+                              {news.category}
+                            </Badge>
+                            {news.urgent && (
+                              <Badge variant="secondary">Urgent</Badge>
+                            )}
+                          </div>
+                          <h3 className="font-semibold mb-1">{news.title}</h3>
+                          <p className="text-sm text-muted-foreground">{news.date}</p>
+                        </div>
+                        <Newspaper className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+              <Button variant="outline" className="w-full mt-4" asChild>
+                <Link to="/news">View All News</Link>
+              </Button>
+            </div>
+
+            {/* Upcoming Events */}
+            <div>
+              <h2 className="text-3xl font-bold mb-6">Upcoming Events</h2>
+              <div className="space-y-4">
+                {upcomingEvents.map((event, index) => (
+                  <Card key={index} className="shadow-soft hover:shadow-medium transition-shadow">
+                    <CardContent className="p-4">
+                      <div className="flex items-start gap-4">
+                        <div className="bg-primary text-primary-foreground p-3 rounded-lg">
+                          <Calendar className="h-5 w-5" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-semibold mb-1">{event.title}</h3>
+                          <p className="text-sm text-muted-foreground">{event.date}</p>
+                          <p className="text-sm text-muted-foreground">{event.location}</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+              <Button variant="outline" className="w-full mt-4" asChild>
+                <Link to="/events">View All Events</Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Quick Access Cards */}
+      <section className="container mx-auto px-4 py-16">
+        <h2 className="text-3xl font-bold mb-8 text-center">Explore More</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[
+            { title: "Community Gossip", desc: "Stay updated with verified community stories", icon: MessageSquare, link: "/gossip", color: "primary" },
+            { title: "Funerals & Notices", desc: "Pay respects and support families", icon: Heart, link: "/funerals", color: "secondary" },
+            { title: "Ward Leaders", desc: "Connect with your representatives", icon: Users, link: "/leaders", color: "primary-light" },
+            { title: "Youth Development", desc: "Skills, jobs, and opportunities", icon: TrendingUp, link: "/youth", color: "accent" },
+          ].map((item, index) => (
+            <Card key={index} className="shadow-medium hover:shadow-strong transition-all hover:-translate-y-1">
+              <CardHeader>
+                <div className={`bg-${item.color} w-12 h-12 rounded-lg flex items-center justify-center mb-3`}>
+                  <item.icon className="h-6 w-6 text-white" />
+                </div>
+                <CardTitle className="text-lg">{item.title}</CardTitle>
+                <CardDescription>{item.desc}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button variant="outline" className="w-full" asChild>
+                  <Link to={item.link}>
+                    Explore <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}

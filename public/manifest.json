@@ -1,0 +1,20 @@
+{
+  "name": "Mbakalo Ward Community Hub",
+  "short_name": "Mbakalo Hub",
+  "description": "Community platform for Mbakalo Ward - news, fundraising, events, and development updates",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2E7D32",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ],
+  "categories": ["social", "community", "news"],
+  "lang": "en-US",
+  "dir": "ltr"
+}
