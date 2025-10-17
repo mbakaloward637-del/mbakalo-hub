@@ -2,6 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Home, Newspaper, Heart, MessageSquare, Calendar, Users, TrendingUp, Image, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import kenyaFlag from "@/assets/kenya-flag.png";
 
 const navigation = [
   { name: "Home", href: "/", icon: Home },
@@ -108,8 +109,19 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
               </p>
             </div>
           </div>
-          <div className="border-t mt-8 pt-8 text-center text-sm text-muted-foreground">
-            <p>© 2025 Mbakalo Ward Community Hub. Built for the people, by the people.</p>
+          <div className="border-t mt-8 pt-8">
+            <div className="flex justify-center mb-4">
+              <div className="relative w-48 h-28 overflow-hidden rounded-lg shadow-medium">
+                <img 
+                  src={kenyaFlag} 
+                  alt="Kenyan Flag" 
+                  className="w-full h-full object-cover animate-wave"
+                />
+              </div>
+            </div>
+            <p className="text-center text-sm text-muted-foreground">
+              © 2025 Mbakalo Ward Community Hub. Built for the people, by the people.
+            </p>
           </div>
         </div>
       </footer>
