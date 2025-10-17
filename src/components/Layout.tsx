@@ -85,43 +85,43 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
       <main className="flex-1">{children}</main>
 
       {/* Footer */}
-      <footer className="border-t bg-card mt-16">
-        <div className="container mx-auto px-4 py-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div>
-              <h3 className="font-bold mb-3">Mbakalo Ward Hub</h3>
-              <p className="text-sm text-muted-foreground">
-                Connecting our community through transparency, participation, and development.
-              </p>
-            </div>
-            <div>
-              <h3 className="font-bold mb-3">Quick Links</h3>
-              <ul className="space-y-2 text-sm">
-                <li><Link to="/news" className="text-muted-foreground hover:text-primary">Latest News</Link></li>
-                <li><Link to="/events" className="text-muted-foreground hover:text-primary">Upcoming Events</Link></li>
-                <li><Link to="/leaders" className="text-muted-foreground hover:text-primary">Ward Leaders</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-bold mb-3">Contact</h3>
-              <p className="text-sm text-muted-foreground">
-                Ward Office Hours: Mon-Fri, 8AM-5PM
-              </p>
-            </div>
-          </div>
-          <div className="border-t mt-8 pt-8">
-            <div className="flex justify-center mb-4">
-              <div className="relative w-48 h-28 overflow-hidden rounded-lg shadow-medium">
-                <img 
-                  src={kenyaFlag} 
-                  alt="Kenyan Flag" 
-                  className="w-full h-full object-cover animate-wave"
-                />
+      <footer className="border-t mt-16 relative overflow-hidden">
+        <div 
+          className="absolute inset-0 opacity-20"
+          style={{
+            backgroundImage: `url(${kenyaFlag})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat'
+          }}
+        />
+        <div className="relative bg-card/90 backdrop-blur-sm">
+          <div className="container mx-auto px-4 py-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div>
+                <h3 className="font-bold mb-3">Mbakalo Ward Hub</h3>
+                <p className="text-sm text-muted-foreground">
+                  Connecting our community through transparency, participation, and development.
+                </p>
+              </div>
+              <div>
+                <h3 className="font-bold mb-3">Quick Links</h3>
+                <ul className="space-y-2 text-sm">
+                  <li><Link to="/news" className="text-muted-foreground hover:text-primary">Latest News</Link></li>
+                  <li><Link to="/events" className="text-muted-foreground hover:text-primary">Upcoming Events</Link></li>
+                  <li><Link to="/leaders" className="text-muted-foreground hover:text-primary">Ward Leaders</Link></li>
+                </ul>
+              </div>
+              <div>
+                <h3 className="font-bold mb-3">Contact</h3>
+                <p className="text-sm text-muted-foreground">
+                  Ward Office Hours: Mon-Fri, 8AM-5PM
+                </p>
               </div>
             </div>
-            <p className="text-center text-sm text-muted-foreground">
-              © 2025 Mbakalo Ward Community Hub. Built for the people, by the people.
-            </p>
+            <div className="border-t mt-8 pt-8 text-center text-sm text-muted-foreground">
+              <p>© 2025 Mbakalo Ward Community Hub. Built for the people, by the people.</p>
+            </div>
           </div>
         </div>
       </footer>
