@@ -1,8 +1,11 @@
-import { Link, useLocation } from "react-router-dom";
-import { Home, Newspaper, Heart, MessageSquare, Calendar, Users, TrendingUp, Image, Menu } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Home, Newspaper, Heart, MessageSquare, Calendar, Users, TrendingUp, Image, Menu, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import kenyaFlag from "@/assets/kenya-flag.png";
+import { supabase } from "@/integrations/supabase/client";
+import { User } from "@supabase/supabase-js";
 
 const navigation = [
   { name: "Home", href: "/", icon: Home },
@@ -17,6 +20,28 @@ const navigation = [
 
 export const Layout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const [user, setUser] = useState<User | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setUser(session?.user ?? null);
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    navigate("/auth");
+  };
 
   const NavLinks = () => (
     <>
@@ -51,7 +76,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
               <span className="text-primary-foreground font-bold text-xl">M</span>
             </div>
             <div className="hidden sm:block">
-              <h1 className="font-bold text-lg">Mbakalo Hub</h1>
+              <h1 className="font-bold text-lg">Mbakalo Rescue Team</h1>
               <p className="text-xs text-muted-foreground">Community United</p>
             </div>
           </Link>
@@ -62,7 +87,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
           </nav>
 
           {/* Mobile Menu */}
-          <Sheet>
+          <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild className="lg:hidden">
               <Button variant="outline" size="icon">
                 <Menu className="h-5 w-5" />
@@ -71,13 +96,36 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
             <SheetContent side="right" className="w-64">
               <div className="flex flex-col gap-2 mt-8">
                 <NavLinks />
+                {user ? (
+                  <Button variant="ghost" className="justify-start" onClick={() => {
+                    handleSignOut();
+                    setIsOpen(false);
+                  }}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sign Out
+                  </Button>
+                ) : (
+                  <Button className="justify-start" onClick={() => {
+                    navigate("/auth");
+                    setIsOpen(false);
+                  }}>
+                    Sign In
+                  </Button>
+                )}
               </div>
             </SheetContent>
           </Sheet>
 
-          <Button className="hidden lg:flex bg-gradient-primary" asChild>
-            <Link to="/fundraising">Donate via M-Pesa</Link>
-          </Button>
+          {user ? (
+            <Button variant="ghost" className="hidden lg:flex" onClick={handleSignOut}>
+              <LogOut className="mr-2 h-4 w-4" />
+              Sign Out
+            </Button>
+          ) : (
+            <Button className="hidden lg:flex" asChild>
+              <Link to="/auth">Sign In</Link>
+            </Button>
+          )}
         </div>
       </header>
 
@@ -99,7 +147,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
           <div className="container mx-auto px-4 py-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div>
-                <h3 className="font-bold mb-3">Mbakalo Ward Hub</h3>
+                <h3 className="font-bold mb-3">Mbakalo Rescue Team</h3>
                 <p className="text-sm text-muted-foreground">
                   Connecting our community through transparency, participation, and development.
                 </p>
@@ -120,7 +168,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
               </div>
             </div>
             <div className="border-t mt-8 pt-8 text-center text-sm text-muted-foreground">
-              <p>© 2025 Mbakalo Ward Community Hub. Built for the people, by the people.</p>
+              <p>© 2025 Mbakalo Rescue Team. Built for the people, by the people.</p>
             </div>
           </div>
         </div>
