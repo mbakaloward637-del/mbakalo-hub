@@ -1,78 +1,64 @@
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Newspaper, TrendingUp, Users, Building } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
-const newsArticles = [
-  {
-    id: 1,
-    title: "MCA Announces New Road Construction Plans for Mbakalo",
-    excerpt: "Our Ward Representative has secured funding for 5km of new tarmac roads connecting Mbakalo to neighboring wards.",
-    category: "Development",
-    date: "2 hours ago",
-    priority: "high",
-    image: "road",
-  },
-  {
-    id: 2,
-    title: "Community Health Camp This Saturday",
-    excerpt: "Free medical checkups, vaccinations, and health education at Mbakalo Primary School from 9 AM to 4 PM.",
-    category: "Health",
-    date: "5 hours ago",
-    priority: "urgent",
-    image: "health",
-  },
-  {
-    id: 3,
-    title: "Borehole Project Reaches 60% Completion",
-    excerpt: "The community borehole project is on track. Water supply expected to begin next month serving 500+ households.",
-    category: "Water",
-    date: "1 day ago",
-    priority: "medium",
-    image: "water",
-  },
-  {
-    id: 4,
-    title: "Youth Training Program Enrollment Open",
-    excerpt: "Digital skills and vocational training program now accepting applications. 50 slots available for youth aged 18-35.",
-    category: "Youth",
-    date: "1 day ago",
-    priority: "medium",
-    image: "education",
-  },
-  {
-    id: 5,
-    title: "Ward Development Committee Meeting Summary",
-    excerpt: "Key decisions made on school renovation, market improvement, and security lighting installation.",
-    category: "Governance",
-    date: "2 days ago",
-    priority: "low",
-    image: "meeting",
-  },
-];
-
-const mcaUpdates = [
-  {
-    title: "Quarterly Report Published",
-    description: "Full transparency report on ward projects and budget utilization now available",
-    date: "3 days ago",
-  },
-  {
-    title: "Town Hall Meeting Scheduled",
-    description: "Meet your MCA and discuss ward priorities. March 15th at Community Hall",
-    date: "5 days ago",
-  },
-  {
-    title: "New Youth Employment Initiative",
-    description: "Partnership with county government to create 100 job opportunities",
-    date: "1 week ago",
-  },
-];
+interface NewsArticle {
+  id: string;
+  title: string;
+  excerpt: string;
+  content: string | null;
+  category: string;
+  priority: string;
+  created_at: string;
+}
 
 export default function News() {
+  const [articles, setArticles] = useState<NewsArticle[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchArticles();
+  }, []);
+
+  const fetchArticles = async () => {
+    const { data, error } = await supabase
+      .from("news_articles")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching articles:", error);
+    } else {
+      setArticles(data || []);
+    }
+    setLoading(false);
+  };
+
+  const getTimeAgo = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffDays > 0) return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
+    if (diffHours > 0) return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
+    return "Just now";
+  };
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <p>Loading news...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Header */}
       <div className="mb-8">
         <h1 className="text-4xl font-bold mb-4">News & Politics</h1>
         <p className="text-lg text-muted-foreground">
@@ -85,43 +71,52 @@ export default function News() {
           <TabsTrigger value="all">All News</TabsTrigger>
           <TabsTrigger value="development">Development</TabsTrigger>
           <TabsTrigger value="governance">Governance</TabsTrigger>
-          <TabsTrigger value="mca">MCA Updates</TabsTrigger>
+          <TabsTrigger value="health">Health</TabsTrigger>
         </TabsList>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main News Feed */}
           <div className="lg:col-span-2">
             <TabsContent value="all" className="space-y-6 mt-0">
-              {newsArticles.map((article) => (
-                <Card key={article.id} className="shadow-medium hover:shadow-strong transition-shadow">
-                  <CardHeader>
-                    <div className="flex items-start justify-between gap-4 mb-3">
-                      <div className="flex gap-2">
-                        <Badge>{article.category}</Badge>
-                        {article.priority === "urgent" && (
-                          <Badge variant="destructive">Urgent</Badge>
-                        )}
-                        {article.priority === "high" && (
-                          <Badge className="bg-primary">Important</Badge>
-                        )}
-                      </div>
-                      <span className="text-sm text-muted-foreground">{article.date}</span>
-                    </div>
-                    <CardTitle className="text-2xl">{article.title}</CardTitle>
-                    <CardDescription className="text-base">{article.excerpt}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Newspaper className="h-4 w-4" />
-                      <span>Read full article</span>
-                    </div>
+              {articles.length === 0 ? (
+                <Card className="shadow-medium">
+                  <CardContent className="p-8 text-center">
+                    <p className="text-muted-foreground">No news articles yet. Check back soon!</p>
                   </CardContent>
                 </Card>
-              ))}
+              ) : (
+                articles.map((article) => (
+                  <Card key={article.id} className="shadow-medium hover:shadow-strong transition-shadow">
+                    <CardHeader>
+                      <div className="flex items-start justify-between gap-4 mb-3">
+                        <div className="flex gap-2">
+                          <Badge>{article.category}</Badge>
+                          {article.priority === "urgent" && (
+                            <Badge variant="destructive">Urgent</Badge>
+                          )}
+                          {article.priority === "high" && (
+                            <Badge className="bg-primary">Important</Badge>
+                          )}
+                        </div>
+                        <span className="text-sm text-muted-foreground">
+                          {getTimeAgo(article.created_at)}
+                        </span>
+                      </div>
+                      <CardTitle className="text-2xl">{article.title}</CardTitle>
+                      <CardDescription className="text-base">{article.excerpt}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Newspaper className="h-4 w-4" />
+                        <span>Mbakalo Rescue Team</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
             </TabsContent>
 
             <TabsContent value="development" className="space-y-6 mt-0">
-              {newsArticles.filter(a => a.category === "Development" || a.category === "Water").map((article) => (
+              {articles.filter(a => a.category === "Development" || a.category === "Water").map((article) => (
                 <Card key={article.id} className="shadow-medium">
                   <CardHeader>
                     <Badge className="w-fit mb-2">{article.category}</Badge>
@@ -133,7 +128,7 @@ export default function News() {
             </TabsContent>
 
             <TabsContent value="governance" className="space-y-6 mt-0">
-              {newsArticles.filter(a => a.category === "Governance").map((article) => (
+              {articles.filter(a => a.category === "Governance").map((article) => (
                 <Card key={article.id} className="shadow-medium">
                   <CardHeader>
                     <Badge className="w-fit mb-2">{article.category}</Badge>
@@ -144,22 +139,20 @@ export default function News() {
               ))}
             </TabsContent>
 
-            <TabsContent value="mca" className="space-y-6 mt-0">
-              {mcaUpdates.map((update, index) => (
-                <Card key={index} className="shadow-medium">
+            <TabsContent value="health" className="space-y-6 mt-0">
+              {articles.filter(a => a.category === "Health").map((article) => (
+                <Card key={article.id} className="shadow-medium">
                   <CardHeader>
-                    <CardTitle>{update.title}</CardTitle>
-                    <CardDescription>{update.description}</CardDescription>
-                    <p className="text-sm text-muted-foreground mt-2">{update.date}</p>
+                    <Badge className="w-fit mb-2">{article.category}</Badge>
+                    <CardTitle>{article.title}</CardTitle>
+                    <CardDescription>{article.excerpt}</CardDescription>
                   </CardHeader>
                 </Card>
               ))}
             </TabsContent>
           </div>
 
-          {/* Sidebar */}
           <div className="space-y-6">
-            {/* MCA Info */}
             <Card className="shadow-strong">
               <CardHeader>
                 <div className="flex items-center gap-3 mb-3">
@@ -167,8 +160,8 @@ export default function News() {
                     <Users className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg">Hon. Jane Wanjiku</CardTitle>
-                    <CardDescription>Mbakalo Ward MCA</CardDescription>
+                    <CardTitle className="text-lg">Ward Leadership</CardTitle>
+                    <CardDescription>Mbakalo Rescue Team</CardDescription>
                   </div>
                 </div>
               </CardHeader>
@@ -177,14 +170,9 @@ export default function News() {
                   <p className="text-sm font-medium">Office Hours</p>
                   <p className="text-sm text-muted-foreground">Mon-Fri: 9AM - 5PM</p>
                 </div>
-                <div className="p-3 bg-muted rounded-lg">
-                  <p className="text-sm font-medium">Contact</p>
-                  <p className="text-sm text-muted-foreground">office@mbakaloward.go.ke</p>
-                </div>
               </CardContent>
             </Card>
 
-            {/* Quick Stats */}
             <Card className="shadow-medium">
               <CardHeader>
                 <CardTitle className="text-lg">Ward Statistics</CardTitle>
@@ -214,15 +202,13 @@ export default function News() {
               </CardContent>
             </Card>
 
-            {/* Transparency Notice */}
             <Card className="shadow-medium border-primary">
               <CardHeader>
                 <CardTitle className="text-lg">Transparency Commitment</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  All ward projects, budgets, and expenditures are published monthly for public review. 
-                  View our complete financial reports in the Leaders section.
+                  All ward projects, budgets, and expenditures are published monthly for public review.
                 </p>
               </CardContent>
             </Card>

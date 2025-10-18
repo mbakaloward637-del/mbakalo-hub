@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { CheckCircle2, AlertCircle, XCircle, Search, MessageSquare, Upload, Image as ImageIcon } from "lucide-react";
+import { CheckCircle2, AlertCircle, XCircle, Search, MessageSquare, Upload, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
@@ -46,6 +46,16 @@ interface Post {
   profiles: {
     full_name: string;
   };
+  comments?: Comment[];
+}
+
+interface Comment {
+  id: string;
+  content: string;
+  created_at: string;
+  profiles: {
+    full_name: string;
+  };
 }
 
 const GossipNew = () => {
@@ -55,6 +65,7 @@ const GossipNew = () => {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -79,7 +90,13 @@ const GossipNew = () => {
       .from("posts")
       .select(`
         *,
-        profiles(full_name)
+        profiles(full_name),
+        comments(
+          id,
+          content,
+          created_at,
+          profiles(full_name)
+        )
       `)
       .order("created_at", { ascending: false });
 
@@ -185,6 +202,54 @@ const GossipNew = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAddComment = async (postId: string) => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to comment",
+        variant: "destructive",
+      });
+      navigate("/auth");
+      return;
+    }
+
+    const commentText = commentInputs[postId]?.trim();
+    if (!commentText) {
+      toast({
+        title: "Error",
+        description: "Please enter a comment",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("comments")
+        .insert({
+          post_id: postId,
+          user_id: user.id,
+          content: commentText,
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Comment added",
+      });
+
+      setCommentInputs({ ...commentInputs, [postId]: "" });
+      fetchPosts();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to add comment",
+        variant: "destructive",
+      });
     }
   };
 
@@ -337,6 +402,64 @@ const GossipNew = () => {
                     />
                   </div>
                 )}
+
+                {/* Comments Section */}
+                <div className="mt-6 pt-6 border-t">
+                  <h4 className="font-semibold mb-4 flex items-center gap-2">
+                    <MessageSquare className="h-4 w-4" />
+                    Comments ({post.comments?.length || 0})
+                  </h4>
+
+                  {/* Existing Comments */}
+                  {post.comments && post.comments.length > 0 && (
+                    <div className="space-y-3 mb-4">
+                      {post.comments.map((comment) => (
+                        <div key={comment.id} className="bg-muted p-3 rounded-lg">
+                          <div className="flex justify-between items-start mb-1">
+                            <span className="font-semibold text-sm">
+                              {comment.profiles?.full_name || "Anonymous"}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {new Date(comment.created_at).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <p className="text-sm">{comment.content}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Add Comment */}
+                  {user ? (
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Add a comment..."
+                        value={commentInputs[post.id] || ""}
+                        onChange={(e) =>
+                          setCommentInputs({ ...commentInputs, [post.id]: e.target.value })
+                        }
+                        onKeyPress={(e) => {
+                          if (e.key === "Enter") {
+                            handleAddComment(post.id);
+                          }
+                        }}
+                      />
+                      <Button
+                        size="icon"
+                        onClick={() => handleAddComment(post.id)}
+                      >
+                        <Send className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground text-center">
+                      <Button variant="link" onClick={() => navigate("/auth")}>
+                        Sign in
+                      </Button>
+                      to comment
+                    </p>
+                  )}
+                </div>
               </CardContent>
             </Card>
           );

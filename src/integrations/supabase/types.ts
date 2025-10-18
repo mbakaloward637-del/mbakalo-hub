@@ -14,6 +14,201 @@ export type Database = {
   }
   public: {
     Tables: {
+      comments: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      condolences: {
+        Row: {
+          created_at: string | null
+          funeral_id: string
+          id: string
+          message: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          funeral_id: string
+          id?: string
+          message: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          funeral_id?: string
+          id?: string
+          message?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "condolences_funeral_id_fkey"
+            columns: ["funeral_id"]
+            isOneToOne: false
+            referencedRelation: "funeral_notices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "condolences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          attendees: number | null
+          category: string
+          created_at: string | null
+          description: string
+          event_date: string
+          event_time: string
+          id: string
+          location: string
+          priority: string | null
+          title: string
+        }
+        Insert: {
+          attendees?: number | null
+          category: string
+          created_at?: string | null
+          description: string
+          event_date: string
+          event_time: string
+          id?: string
+          location: string
+          priority?: string | null
+          title: string
+        }
+        Update: {
+          attendees?: number | null
+          category?: string
+          created_at?: string | null
+          description?: string
+          event_date?: string
+          event_time?: string
+          id?: string
+          location?: string
+          priority?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
+      funeral_notices: {
+        Row: {
+          age: number | null
+          burial_date: string
+          burial_time: string
+          created_at: string | null
+          deceased_name: string
+          family_name: string
+          fundraising_enabled: boolean | null
+          fundraising_raised: number | null
+          fundraising_target: number | null
+          id: string
+          location: string
+          passed_date: string
+        }
+        Insert: {
+          age?: number | null
+          burial_date: string
+          burial_time: string
+          created_at?: string | null
+          deceased_name: string
+          family_name: string
+          fundraising_enabled?: boolean | null
+          fundraising_raised?: number | null
+          fundraising_target?: number | null
+          id?: string
+          location: string
+          passed_date: string
+        }
+        Update: {
+          age?: number | null
+          burial_date?: string
+          burial_time?: string
+          created_at?: string | null
+          deceased_name?: string
+          family_name?: string
+          fundraising_enabled?: boolean | null
+          fundraising_raised?: number | null
+          fundraising_target?: number | null
+          id?: string
+          location?: string
+          passed_date?: string
+        }
+        Relationships: []
+      }
+      news_articles: {
+        Row: {
+          category: string
+          content: string | null
+          created_at: string | null
+          excerpt: string
+          id: string
+          priority: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          content?: string | null
+          created_at?: string | null
+          excerpt: string
+          id?: string
+          priority?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          content?: string | null
+          created_at?: string | null
+          excerpt?: string
+          id?: string
+          priority?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       posts: {
         Row: {
           category: string | null
@@ -76,6 +271,42 @@ export type Database = {
           created_at?: string | null
           full_name?: string | null
           id?: string
+        }
+        Relationships: []
+      }
+      projects: {
+        Row: {
+          category: string
+          created_at: string | null
+          description: string
+          id: string
+          raised_amount: number | null
+          status: string | null
+          target_amount: number
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          description: string
+          id?: string
+          raised_amount?: number | null
+          status?: string | null
+          target_amount: number
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          description?: string
+          id?: string
+          raised_amount?: number | null
+          status?: string | null
+          target_amount?: number
+          title?: string
+          updated_at?: string | null
         }
         Relationships: []
       }

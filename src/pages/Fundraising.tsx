@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -7,61 +7,43 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DollarSign, TrendingUp, CheckCircle2, Clock } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
-const projects = [
-  {
-    id: 1,
-    title: "Community Borehole Project",
-    description: "Provide clean water access to over 500 households in Mbakalo Ward",
-    category: "Water",
-    raised: 450000,
-    goal: 800000,
-    status: "active",
-    donors: 156,
-  },
-  {
-    id: 2,
-    title: "Youth Training Center",
-    description: "Equip young people with digital skills and vocational training",
-    category: "Education",
-    raised: 280000,
-    goal: 500000,
-    status: "active",
-    donors: 89,
-  },
-  {
-    id: 3,
-    title: "Mama Alice Medical Fund",
-    description: "Emergency medical support for community elder",
-    category: "Health",
-    raised: 85000,
-    goal: 150000,
-    status: "urgent",
-    donors: 124,
-  },
-  {
-    id: 4,
-    title: "School Renovation Project",
-    description: "Renovate classrooms and provide new desks",
-    category: "Education",
-    raised: 320000,
-    goal: 400000,
-    status: "active",
-    donors: 67,
-  },
-];
-
-const recentDonations = [
-  { name: "John K.", amount: 5000, project: "Borehole Project", time: "5 mins ago" },
-  { name: "Mary W.", amount: 2000, project: "Medical Fund", time: "23 mins ago" },
-  { name: "Peter M.", amount: 10000, project: "Training Center", time: "1 hour ago" },
-  { name: "Grace N.", amount: 3000, project: "School Renovation", time: "2 hours ago" },
-];
+interface Project {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  target_amount: number;
+  raised_amount: number;
+  status: string;
+  created_at: string;
+}
 
 export default function Fundraising() {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [amount, setAmount] = useState("");
-  const [selectedProject, setSelectedProject] = useState<number | null>(null);
+  const [selectedProject, setSelectedProject] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchProjects();
+  }, []);
+
+  const fetchProjects = async () => {
+    const { data, error } = await supabase
+      .from("projects")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching projects:", error);
+    } else {
+      setProjects(data || []);
+    }
+    setLoading(false);
+  };
 
   const handleDonate = () => {
     if (!phoneNumber || !amount || !selectedProject) {
@@ -78,9 +60,20 @@ export default function Fundraising() {
     setSelectedProject(null);
   };
 
+  const totalRaised = projects.reduce((sum, p) => sum + p.raised_amount, 0);
+  const totalTarget = projects.reduce((sum, p) => sum + p.target_amount, 0);
+  const activeProjects = projects.filter(p => p.status === "active").length;
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <p>Loading fundraising projects...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Header */}
       <div className="mb-12 text-center">
         <h1 className="text-4xl font-bold mb-4">Community Fundraising</h1>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -97,7 +90,7 @@ export default function Fundraising() {
                 <DollarSign className="h-6 w-6 text-primary-foreground" />
               </div>
               <div>
-                <p className="text-2xl font-bold">KSh 1.2M</p>
+                <p className="text-2xl font-bold">KSh {(totalRaised / 1000).toFixed(1)}K</p>
                 <p className="text-sm text-muted-foreground">Total Raised</p>
               </div>
             </div>
@@ -108,10 +101,10 @@ export default function Fundraising() {
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
               <div className="bg-secondary p-3 rounded-lg">
-                <TrendingUp className="h-6 w-6 text-secondary-foreground" />
+                <TrendingUp className="h-6 w-6 text-white" />
               </div>
               <div>
-                <p className="text-2xl font-bold">8</p>
+                <p className="text-2xl font-bold">{activeProjects}</p>
                 <p className="text-sm text-muted-foreground">Active Projects</p>
               </div>
             </div>
@@ -122,221 +115,258 @@ export default function Fundraising() {
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
               <div className="bg-accent p-3 rounded-lg">
-                <CheckCircle2 className="h-6 w-6 text-accent-foreground" />
+                <CheckCircle2 className="h-6 w-6 text-white" />
               </div>
               <div>
-                <p className="text-2xl font-bold">436</p>
-                <p className="text-sm text-muted-foreground">Total Donors</p>
+                <p className="text-2xl font-bold">{Math.round((totalRaised / totalTarget) * 100)}%</p>
+                <p className="text-sm text-muted-foreground">Overall Progress</p>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Projects List */}
-        <div className="lg:col-span-2">
-          <Tabs defaultValue="all" className="w-full">
-            <TabsList className="mb-6">
-              <TabsTrigger value="all">All Projects</TabsTrigger>
-              <TabsTrigger value="active">Active</TabsTrigger>
-              <TabsTrigger value="urgent">Urgent</TabsTrigger>
-            </TabsList>
+      <Tabs defaultValue="all" className="w-full">
+        <TabsList className="mb-8">
+          <TabsTrigger value="all">All Projects</TabsTrigger>
+          <TabsTrigger value="active">Active</TabsTrigger>
+          <TabsTrigger value="completed">Completed</TabsTrigger>
+          <TabsTrigger value="donate">Donate Now</TabsTrigger>
+        </TabsList>
 
-            <TabsContent value="all" className="space-y-6">
-              {projects.map((project) => {
-                const progress = (project.raised / project.goal) * 100;
-                return (
-                  <Card 
-                    key={project.id} 
-                    className={`shadow-medium hover:shadow-strong transition-all cursor-pointer ${
-                      selectedProject === project.id ? "ring-2 ring-primary" : ""
-                    }`}
-                    onClick={() => setSelectedProject(project.id)}
-                  >
-                    <CardHeader>
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Badge>{project.category}</Badge>
-                            {project.status === "urgent" && (
-                              <Badge variant="destructive">Urgent</Badge>
-                            )}
-                          </div>
-                          <CardTitle className="text-xl">{project.title}</CardTitle>
-                          <CardDescription>{project.description}</CardDescription>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        <div>
-                          <div className="flex justify-between text-sm mb-2">
-                            <span className="text-muted-foreground">
-                              KSh {project.raised.toLocaleString()} raised
-                            </span>
-                            <span className="font-semibold">
-                              Goal: KSh {project.goal.toLocaleString()}
-                            </span>
-                          </div>
-                          <div className="h-3 bg-muted rounded-full overflow-hidden">
-                            <div 
-                              className="h-full bg-gradient-primary transition-all duration-500"
-                              style={{ width: `${Math.min(progress, 100)}%` }}
-                            />
-                          </div>
-                        </div>
-                        <div className="flex justify-between text-sm text-muted-foreground">
-                          <span>{project.donors} donors</span>
-                          <span>{Math.round(progress)}% funded</span>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </TabsContent>
-
-            <TabsContent value="active">
-              <div className="space-y-6">
-                {projects.filter(p => p.status === "active").map((project) => {
-                  const progress = (project.raised / project.goal) * 100;
-                  return (
-                    <Card key={project.id} className="shadow-medium">
-                      <CardHeader>
-                        <CardTitle>{project.title}</CardTitle>
+        <TabsContent value="all" className="space-y-6">
+          {projects.length === 0 ? (
+            <Card className="shadow-medium">
+              <CardContent className="p-8 text-center">
+                <p className="text-muted-foreground">No fundraising projects yet.</p>
+              </CardContent>
+            </Card>
+          ) : (
+            projects.map((project) => {
+              const progress = (project.raised_amount / project.target_amount) * 100;
+              return (
+                <Card key={project.id} className="shadow-medium hover:shadow-strong transition-shadow">
+                  <CardHeader>
+                    <div className="flex justify-between items-start gap-4">
+                      <div className="flex-1">
+                        <CardTitle className="text-2xl mb-2">{project.title}</CardTitle>
                         <CardDescription>{project.description}</CardDescription>
-                      </CardHeader>
-                      <CardContent>
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <Badge className="bg-primary">{project.category}</Badge>
+                        {project.status === "urgent" && (
+                          <Badge variant="destructive">Urgent</Badge>
+                        )}
+                        {project.status === "completed" && (
+                          <Badge className="bg-status-verified">Completed</Badge>
+                        )}
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div>
+                        <div className="flex justify-between text-sm mb-2">
+                          <span className="text-muted-foreground">Progress</span>
+                          <span className="font-semibold">
+                            KSh {project.raised_amount.toLocaleString()} / KSh {project.target_amount.toLocaleString()}
+                          </span>
+                        </div>
                         <div className="h-3 bg-muted rounded-full overflow-hidden">
                           <div 
-                            className="h-full bg-gradient-primary"
+                            className="h-full bg-gradient-primary transition-all duration-500"
                             style={{ width: `${Math.min(progress, 100)}%` }}
                           />
                         </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            </TabsContent>
+                        <p className="text-sm text-muted-foreground mt-2">
+                          {progress.toFixed(1)}% funded
+                        </p>
+                      </div>
+                      <Button 
+                        className="w-full bg-gradient-primary"
+                        onClick={() => {
+                          setSelectedProject(project.id);
+                          document.querySelector('[value="donate"]')?.dispatchEvent(new Event('click', { bubbles: true }));
+                        }}
+                      >
+                        Contribute Now
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })
+          )}
+        </TabsContent>
 
-            <TabsContent value="urgent">
-              <div className="space-y-6">
-                {projects.filter(p => p.status === "urgent").map((project) => (
-                  <Card key={project.id} className="shadow-medium border-secondary">
-                    <CardHeader>
-                      <Badge variant="destructive" className="w-fit mb-2">Urgent</Badge>
-                      <CardTitle>{project.title}</CardTitle>
-                      <CardDescription>{project.description}</CardDescription>
-                    </CardHeader>
-                  </Card>
-                ))}
-              </div>
-            </TabsContent>
-          </Tabs>
-        </div>
+        <TabsContent value="active" className="space-y-6">
+          {projects.filter(p => p.status === "active").map((project) => {
+            const progress = (project.raised_amount / project.target_amount) * 100;
+            return (
+              <Card key={project.id} className="shadow-medium">
+                <CardHeader>
+                  <CardTitle>{project.title}</CardTitle>
+                  <CardDescription>{project.description}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-3 bg-muted rounded-full overflow-hidden mb-2">
+                    <div 
+                      className="h-full bg-gradient-primary"
+                      style={{ width: `${Math.min(progress, 100)}%` }}
+                    />
+                  </div>
+                  <p className="text-sm">
+                    KSh {project.raised_amount.toLocaleString()} raised
+                  </p>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </TabsContent>
 
-        {/* Donation Form */}
-        <div>
-          <Card className="shadow-strong sticky top-20">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <DollarSign className="h-5 w-5" />
-                Donate via M-Pesa
-              </CardTitle>
-              <CardDescription>
-                Safe, instant, and transparent donations
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="project">Select Project</Label>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {selectedProject 
-                    ? projects.find(p => p.id === selectedProject)?.title
-                    : "Click a project above to select"}
+        <TabsContent value="completed" className="space-y-6">
+          {projects.filter(p => p.status === "completed").map((project) => (
+            <Card key={project.id} className="shadow-medium border-status-verified">
+              <CardHeader>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle>{project.title}</CardTitle>
+                    <CardDescription>{project.description}</CardDescription>
+                  </div>
+                  <Badge className="bg-status-verified">
+                    <CheckCircle2 className="h-3 w-3 mr-1" />
+                    Completed
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm font-medium">
+                  KSh {project.raised_amount.toLocaleString()} raised
                 </p>
+              </CardContent>
+            </Card>
+          ))}
+        </TabsContent>
+
+        <TabsContent value="donate">
+          <Card className="shadow-strong max-w-md mx-auto">
+            <CardHeader>
+              <CardTitle>Donate via M-Pesa</CardTitle>
+              <CardDescription>Quick and secure mobile money donations</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="project">Select Project</Label>
+                <select
+                  id="project"
+                  className="w-full h-10 px-3 rounded-md border border-input bg-background"
+                  value={selectedProject || ""}
+                  onChange={(e) => setSelectedProject(e.target.value)}
+                >
+                  <option value="">Choose a project...</option>
+                  {projects.filter(p => p.status === "active").map((project) => (
+                    <option key={project.id} value={project.id}>
+                      {project.title}
+                    </option>
+                  ))}
+                </select>
               </div>
 
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="phone">M-Pesa Phone Number</Label>
-                <Input 
+                <Input
                   id="phone"
                   type="tel"
                   placeholder="0712345678"
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
-                  className="mt-1"
                 />
               </div>
 
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="amount">Amount (KSh)</Label>
-                <Input 
+                <Input
                   id="amount"
                   type="number"
-                  placeholder="1000"
+                  placeholder="500"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  className="mt-1"
                 />
-                <div className="flex gap-2 mt-2">
-                  {[500, 1000, 2000, 5000].map((preset) => (
-                    <Button
-                      key={preset}
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setAmount(preset.toString())}
-                    >
-                      {preset}
-                    </Button>
-                  ))}
-                </div>
               </div>
 
               <Button 
                 className="w-full bg-gradient-primary" 
                 size="lg"
                 onClick={handleDonate}
-                disabled={!selectedProject}
               >
-                Send M-Pesa Prompt
+                <DollarSign className="mr-2 h-5 w-5" />
+                Send M-Pesa STK Push
               </Button>
 
-              <p className="text-xs text-muted-foreground text-center">
-                You'll receive an M-Pesa prompt on your phone. Enter your PIN to complete the donation.
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Recent Donations */}
-          <Card className="shadow-medium mt-6">
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Clock className="h-5 w-5" />
-                Recent Donations
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {recentDonations.map((donation, index) => (
-                  <div key={index} className="flex items-center justify-between text-sm">
-                    <div>
-                      <p className="font-medium">{donation.name}</p>
-                      <p className="text-xs text-muted-foreground">{donation.project}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-primary">+KSh {donation.amount}</p>
-                      <p className="text-xs text-muted-foreground">{donation.time}</p>
-                    </div>
-                  </div>
-                ))}
+              <div className="text-xs text-muted-foreground text-center">
+                You will receive an M-Pesa prompt on your phone to complete the payment
               </div>
             </CardContent>
           </Card>
-        </div>
-      </div>
+
+          {/* How It Works */}
+          <Card className="shadow-medium mt-8 max-w-md mx-auto">
+            <CardHeader>
+              <CardTitle className="text-lg">How It Works</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm">
+              <div className="flex gap-3">
+                <div className="bg-primary text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center flex-shrink-0">
+                  1
+                </div>
+                <p>Select a project and enter your M-Pesa number</p>
+              </div>
+              <div className="flex gap-3">
+                <div className="bg-primary text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center flex-shrink-0">
+                  2
+                </div>
+                <p>You will receive an M-Pesa prompt on your phone</p>
+              </div>
+              <div className="flex gap-3">
+                <div className="bg-primary text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center flex-shrink-0">
+                  3
+                </div>
+                <p>Enter your M-Pesa PIN to complete the donation</p>
+              </div>
+              <div className="flex gap-3">
+                <div className="bg-primary text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center flex-shrink-0">
+                  4
+                </div>
+                <p>Receive confirmation and see your impact</p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      {/* Transparency Section */}
+      <Card className="shadow-medium border-primary mt-12">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <CheckCircle2 className="h-5 w-5 text-primary" />
+            Transparency & Accountability
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3 text-sm">
+          <p>
+            <strong>Monthly Reports:</strong> All project expenditures are published monthly with receipts and documentation.
+          </p>
+          <p>
+            <strong>Community Oversight:</strong> Ward Development Committee reviews all project finances quarterly.
+          </p>
+          <p>
+            <strong>Direct Impact:</strong> 100% of donations go directly to projects. No administrative fees deducted.
+          </p>
+          <p>
+            <strong>Real-time Updates:</strong> Progress updates posted regularly on this platform.
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 }
