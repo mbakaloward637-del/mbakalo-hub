@@ -169,6 +169,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
             </div>
             <div className="border-t mt-8 pt-8 text-center text-sm text-muted-foreground">
               <p>© 2025 Mbakalo Rescue Team. Built for the people, by the people.</p>
+              <p className="mt-2">Developed By <span className="text-primary font-semibold">Laban Panda Khisa</span></p>
             </div>
           </div>
         </div>
