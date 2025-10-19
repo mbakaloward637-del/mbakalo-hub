@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,50 +14,80 @@ import {
   ArrowRight
 } from "lucide-react";
 import heroImage from "@/assets/hero-community.jpg";
+import { supabase } from "@/integrations/supabase/client";
 
-const highlights = [
-  {
-    title: "Community Borehole Project",
-    amount: "KSh 450,000 / KSh 800,000",
-    progress: 56,
-    category: "Water",
-  },
-  {
-    title: "Youth Training Center",
-    amount: "KSh 280,000 / KSh 500,000",
-    progress: 56,
-    category: "Education",
-  },
-];
+interface Project {
+  id: string;
+  title: string;
+  category: string;
+  target_amount: number;
+  raised_amount: number;
+}
 
-const recentNews = [
-  {
-    title: "MCA Announces New Road Construction Plans",
-    category: "Development",
-    date: "2 hours ago",
-    urgent: false,
-  },
-  {
-    title: "Community Health Camp - This Saturday",
-    category: "Health",
-    date: "5 hours ago",
-    urgent: true,
-  },
-  {
-    title: "Borehole Project Update: 60% Complete",
-    category: "Water",
-    date: "1 day ago",
-    urgent: false,
-  },
-];
+interface NewsArticle {
+  id: string;
+  title: string;
+  category: string;
+  created_at: string;
+  priority: string;
+}
 
-const upcomingEvents = [
-  { title: "Ward Leaders Meeting", date: "Tomorrow, 2PM", location: "Chief's Camp" },
-  { title: "Youth Football Tournament", date: "Saturday, 9AM", location: "Community Grounds" },
-  { title: "Women's Group Fundraiser", date: "Next Tuesday, 3PM", location: "Mbakalo Market" },
-];
+interface Event {
+  id: string;
+  title: string;
+  event_date: string;
+  event_time: string;
+  location: string;
+}
 
 export default function Home() {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [news, setNews] = useState<NewsArticle[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    // Fetch active projects
+    const { data: projectsData } = await supabase
+      .from("projects")
+      .select("*")
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
+      .limit(2);
+
+    if (projectsData) setProjects(projectsData);
+
+    // Fetch recent news
+    const { data: newsData } = await supabase
+      .from("news_articles")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(3);
+
+    if (newsData) setNews(newsData);
+
+    // Fetch upcoming events
+    const { data: eventsData } = await supabase
+      .from("events")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(3);
+
+    if (eventsData) setEvents(eventsData);
+  };
+
+  const getTimeAgo = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    
+    if (diffInHours < 1) return "Just now";
+    if (diffInHours < 24) return `${diffInHours} hours ago`;
+    return `${Math.floor(diffInHours / 24)} days ago`;
+  };
   return (
     <div>
       {/* Hero Section */}
@@ -132,38 +163,51 @@ export default function Home() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {highlights.map((project, index) => (
-            <Card key={index} className="shadow-medium hover:shadow-strong transition-shadow">
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle>{project.title}</CardTitle>
-                    <CardDescription>Category: {project.category}</CardDescription>
-                  </div>
-                  <Badge className="bg-gradient-primary">{project.progress}%</Badge>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex justify-between text-sm mb-2">
-                      <span className="text-muted-foreground">Progress</span>
-                      <span className="font-semibold">{project.amount}</span>
-                    </div>
-                    <div className="h-3 bg-muted rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-gradient-primary transition-all duration-500"
-                        style={{ width: `${project.progress}%` }}
-                      />
-                    </div>
-                  </div>
-                  <Button className="w-full bg-gradient-primary" asChild>
-                    <Link to="/fundraising">Contribute Now</Link>
-                  </Button>
-                </div>
+          {projects.length === 0 ? (
+            <Card className="shadow-medium col-span-2">
+              <CardContent className="p-8 text-center text-muted-foreground">
+                No active projects at the moment. Check back soon!
               </CardContent>
             </Card>
-          ))}
+          ) : (
+            projects.map((project) => {
+              const progress = Math.round((project.raised_amount / project.target_amount) * 100);
+              return (
+                <Card key={project.id} className="shadow-medium hover:shadow-strong transition-shadow">
+                  <CardHeader>
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <CardTitle>{project.title}</CardTitle>
+                        <CardDescription>Category: {project.category}</CardDescription>
+                      </div>
+                      <Badge className="bg-gradient-primary">{progress}%</Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div>
+                        <div className="flex justify-between text-sm mb-2">
+                          <span className="text-muted-foreground">Progress</span>
+                          <span className="font-semibold">
+                            KSh {project.raised_amount.toLocaleString()} / KSh {project.target_amount.toLocaleString()}
+                          </span>
+                        </div>
+                        <div className="h-3 bg-muted rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-gradient-primary transition-all duration-500"
+                            style={{ width: `${progress}%` }}
+                          />
+                        </div>
+                      </div>
+                      <Button className="w-full bg-gradient-primary" asChild>
+                        <Link to="/fundraising">Contribute Now</Link>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })
+          )}
         </div>
       </section>
 
@@ -175,27 +219,35 @@ export default function Home() {
             <div>
               <h2 className="text-3xl font-bold mb-6">Recent News</h2>
               <div className="space-y-4">
-                {recentNews.map((news, index) => (
-                  <Card key={index} className="shadow-soft hover:shadow-medium transition-shadow">
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Badge variant={news.urgent ? "destructive" : "secondary"}>
-                              {news.category}
-                            </Badge>
-                            {news.urgent && (
-                              <Badge variant="secondary">Urgent</Badge>
-                            )}
-                          </div>
-                          <h3 className="font-semibold mb-1">{news.title}</h3>
-                          <p className="text-sm text-muted-foreground">{news.date}</p>
-                        </div>
-                        <Newspaper className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                      </div>
+                {news.length === 0 ? (
+                  <Card className="shadow-soft">
+                    <CardContent className="p-8 text-center text-muted-foreground">
+                      No news articles yet. Check back soon!
                     </CardContent>
                   </Card>
-                ))}
+                ) : (
+                  news.map((article) => (
+                    <Card key={article.id} className="shadow-soft hover:shadow-medium transition-shadow">
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Badge variant={article.priority === "urgent" ? "destructive" : "secondary"}>
+                                {article.category}
+                              </Badge>
+                              {article.priority === "urgent" && (
+                                <Badge variant="secondary">Urgent</Badge>
+                              )}
+                            </div>
+                            <h3 className="font-semibold mb-1">{article.title}</h3>
+                            <p className="text-sm text-muted-foreground">{getTimeAgo(article.created_at)}</p>
+                          </div>
+                          <Newspaper className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
               </div>
               <Button variant="outline" className="w-full mt-4" asChild>
                 <Link to="/news">View All News</Link>
@@ -206,22 +258,30 @@ export default function Home() {
             <div>
               <h2 className="text-3xl font-bold mb-6">Upcoming Events</h2>
               <div className="space-y-4">
-                {upcomingEvents.map((event, index) => (
-                  <Card key={index} className="shadow-soft hover:shadow-medium transition-shadow">
-                    <CardContent className="p-4">
-                      <div className="flex items-start gap-4">
-                        <div className="bg-primary text-primary-foreground p-3 rounded-lg">
-                          <Calendar className="h-5 w-5" />
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="font-semibold mb-1">{event.title}</h3>
-                          <p className="text-sm text-muted-foreground">{event.date}</p>
-                          <p className="text-sm text-muted-foreground">{event.location}</p>
-                        </div>
-                      </div>
+                {events.length === 0 ? (
+                  <Card className="shadow-soft">
+                    <CardContent className="p-8 text-center text-muted-foreground">
+                      No upcoming events yet. Check back soon!
                     </CardContent>
                   </Card>
-                ))}
+                ) : (
+                  events.map((event) => (
+                    <Card key={event.id} className="shadow-soft hover:shadow-medium transition-shadow">
+                      <CardContent className="p-4">
+                        <div className="flex items-start gap-4">
+                          <div className="bg-primary text-primary-foreground p-3 rounded-lg">
+                            <Calendar className="h-5 w-5" />
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="font-semibold mb-1">{event.title}</h3>
+                            <p className="text-sm text-muted-foreground">{event.event_date} at {event.event_time}</p>
+                            <p className="text-sm text-muted-foreground">{event.location}</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
               </div>
               <Button variant="outline" className="w-full mt-4" asChild>
                 <Link to="/events">View All Events</Link>
