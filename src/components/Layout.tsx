@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Home, Newspaper, Heart, MessageSquare, Calendar, Users, TrendingUp, Image, Menu, LogOut } from "lucide-react";
+import { Home, Newspaper, Heart, MessageSquare, Calendar, Users, TrendingUp, Image, Menu, LogOut, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import kenyaFlag from "@/assets/kenya-flag.png";
@@ -23,20 +23,42 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
+      if (session?.user) {
+        checkAdminStatus(session.user.id);
+      }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setUser(session?.user ?? null);
+        if (session?.user) {
+          setTimeout(() => {
+            checkAdminStatus(session.user.id);
+          }, 0);
+        } else {
+          setIsAdmin(false);
+        }
       }
     );
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const checkAdminStatus = async (userId: string) => {
+    const { data } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("role", "admin")
+      .single();
+
+    setIsAdmin(!!data);
+  };
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -84,6 +106,19 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-1">
             <NavLinks />
+            {isAdmin && (
+              <Link
+                to="/admin"
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                  location.pathname === "/admin"
+                    ? "bg-primary text-primary-foreground"
+                    : "text-foreground hover:bg-muted"
+                }`}
+              >
+                <Shield className="h-5 w-5" />
+                <span className="font-medium">Admin</span>
+              </Link>
+            )}
           </nav>
 
           {/* Mobile Menu */}
@@ -96,6 +131,20 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
             <SheetContent side="right" className="w-64">
               <div className="flex flex-col gap-2 mt-8">
                 <NavLinks />
+                {isAdmin && (
+                  <Link
+                    to="/admin"
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                      location.pathname === "/admin"
+                        ? "bg-primary text-primary-foreground"
+                        : "text-foreground hover:bg-muted"
+                    }`}
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <Shield className="h-5 w-5" />
+                    <span className="font-medium">Admin</span>
+                  </Link>
+                )}
                 {user ? (
                   <Button variant="ghost" className="justify-start" onClick={() => {
                     handleSignOut();
