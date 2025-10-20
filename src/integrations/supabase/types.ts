@@ -92,6 +92,60 @@ export type Database = {
           },
         ]
       }
+      donations: {
+        Row: {
+          amount: number
+          created_at: string | null
+          donor_name: string
+          donor_phone: string
+          funeral_id: string | null
+          id: string
+          mpesa_receipt_number: string | null
+          project_id: string | null
+          status: string
+          transaction_date: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          donor_name: string
+          donor_phone: string
+          funeral_id?: string | null
+          id?: string
+          mpesa_receipt_number?: string | null
+          project_id?: string | null
+          status?: string
+          transaction_date?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          donor_name?: string
+          donor_phone?: string
+          funeral_id?: string | null
+          id?: string
+          mpesa_receipt_number?: string | null
+          project_id?: string | null
+          status?: string
+          transaction_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "donations_funeral_id_fkey"
+            columns: ["funeral_id"]
+            isOneToOne: false
+            referencedRelation: "funeral_notices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "donations_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           attendees: number | null
