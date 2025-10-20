@@ -176,6 +176,39 @@ export type Database = {
         }
         Relationships: []
       }
+      moderation_queue: {
+        Row: {
+          content_id: string
+          content_text: string
+          created_at: string | null
+          id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          type: string
+        }
+        Insert: {
+          content_id: string
+          content_text: string
+          created_at?: string | null
+          id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          type: string
+        }
+        Update: {
+          content_id?: string
+          content_text?: string
+          created_at?: string | null
+          id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          type?: string
+        }
+        Relationships: []
+      }
       news_articles: {
         Row: {
           category: string

@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Loader2, Users, Newspaper, Calendar, Heart, DollarSign } from "lucide-react";
+import { Loader2, Users, Newspaper, Calendar, Heart, DollarSign, Shield, CheckCircle, AlertCircle, XCircle } from "lucide-react";
 
 export default function Admin() {
   const navigate = useNavigate();
@@ -95,13 +95,18 @@ export default function Admin() {
       </div>
 
       {/* Management Tabs */}
-      <Tabs defaultValue="news" className="space-y-4">
+      <Tabs defaultValue="moderation" className="space-y-4">
         <TabsList>
+          <TabsTrigger value="moderation">Moderation</TabsTrigger>
           <TabsTrigger value="news">News</TabsTrigger>
           <TabsTrigger value="events">Events</TabsTrigger>
           <TabsTrigger value="funerals">Funerals</TabsTrigger>
           <TabsTrigger value="projects">Projects</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="moderation">
+          <ModerationManagement />
+        </TabsContent>
 
         <TabsContent value="news">
           <NewsManagement />
@@ -120,6 +125,143 @@ export default function Admin() {
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+function ModerationManagement() {
+  const [items, setItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchPendingItems();
+  }, []);
+
+  const fetchPendingItems = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("moderation_queue")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setItems(data || []);
+    } catch (error) {
+      console.error("Error fetching pending items:", error);
+      toast.error("Failed to load moderation queue");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleModeration = async (itemId: string, action: "approved" | "investigating" | "debunked") => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { error } = await supabase
+        .from("moderation_queue")
+        .update({
+          status: action,
+          reviewed_at: new Date().toISOString(),
+          reviewed_by: user.id,
+        })
+        .eq("id", itemId);
+
+      if (error) throw error;
+
+      toast.success(`Item ${action === "approved" ? "approved" : action === "investigating" ? "marked for investigation" : "debunked"}!`);
+      fetchPendingItems();
+    } catch (error) {
+      console.error("Error updating moderation status:", error);
+      toast.error("Failed to update moderation status");
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Shield className="h-5 w-5" />
+          Moderation Queue
+        </CardTitle>
+        <CardDescription>Review and moderate user-generated content</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {items.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            No items pending moderation
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {items.map((item) => (
+              <div
+                key={item.id}
+                className="border rounded-lg p-4 space-y-3"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-sm font-semibold uppercase text-primary">
+                        {item.type}
+                      </span>
+                      <span className={`text-xs px-2 py-1 rounded ${
+                        item.status === "pending" ? "bg-yellow-100 text-yellow-800" :
+                        item.status === "approved" ? "bg-green-100 text-green-800" :
+                        item.status === "investigating" ? "bg-blue-100 text-blue-800" :
+                        "bg-red-100 text-red-800"
+                      }`}>
+                        {item.status}
+                      </span>
+                    </div>
+                    <p className="text-sm text-foreground mb-2">{item.content_text}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Created: {new Date(item.created_at).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+                
+                {item.status === "pending" && (
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="default"
+                      onClick={() => handleModeration(item.id, "approved")}
+                    >
+                      <CheckCircle className="h-4 w-4 mr-1" />
+                      Approve
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => handleModeration(item.id, "investigating")}
+                    >
+                      <AlertCircle className="h-4 w-4 mr-1" />
+                      Investigate
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => handleModeration(item.id, "debunked")}
+                    >
+                      <XCircle className="h-4 w-4 mr-1" />
+                      Debunk
+                    </Button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
