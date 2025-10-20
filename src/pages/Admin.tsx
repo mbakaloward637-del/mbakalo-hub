@@ -9,7 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Loader2, Users, Newspaper, Calendar, Heart, DollarSign, Shield, CheckCircle, AlertCircle, XCircle } from "lucide-react";
+import { Loader2, Users, Newspaper, Calendar, Heart, DollarSign, Shield, CheckCircle, AlertCircle, XCircle, BarChart3 } from "lucide-react";
+import AnalyticsDashboard from "@/components/admin/AnalyticsDashboard";
+import ImageUpload from "@/components/admin/ImageUpload";
 
 export default function Admin() {
   const navigate = useNavigate();
@@ -95,14 +97,19 @@ export default function Admin() {
       </div>
 
       {/* Management Tabs */}
-      <Tabs defaultValue="moderation" className="space-y-4">
+      <Tabs defaultValue="analytics" className="space-y-4">
         <TabsList>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
           <TabsTrigger value="moderation">Moderation</TabsTrigger>
           <TabsTrigger value="news">News</TabsTrigger>
           <TabsTrigger value="events">Events</TabsTrigger>
           <TabsTrigger value="funerals">Funerals</TabsTrigger>
           <TabsTrigger value="projects">Projects</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="analytics">
+          <AnalyticsDashboard />
+        </TabsContent>
 
         <TabsContent value="moderation">
           <ModerationManagement />
@@ -298,6 +305,7 @@ function NewsManagement() {
   const [content, setContent] = useState("");
   const [category, setCategory] = useState("community");
   const [priority, setPriority] = useState("normal");
+  const [imageUrl, setImageUrl] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -311,6 +319,7 @@ function NewsManagement() {
         content: content || null,
         category,
         priority,
+        image_url: imageUrl || null,
       }]);
 
       if (error) throw error;
@@ -321,6 +330,7 @@ function NewsManagement() {
       setContent("");
       setCategory("community");
       setPriority("normal");
+      setImageUrl("");
     } catch (error) {
       toast.error("Failed to create news article");
       console.error(error);
@@ -364,6 +374,13 @@ function NewsManagement() {
               rows={6}
             />
           </div>
+          
+          <ImageUpload
+            bucket="news-images"
+            onUploadComplete={setImageUrl}
+            currentImageUrl={imageUrl}
+          />
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="category">Category</Label>
@@ -410,6 +427,7 @@ function EventsManagement() {
   const [eventDate, setEventDate] = useState("");
   const [eventTime, setEventTime] = useState("");
   const [category, setCategory] = useState("community");
+  const [imageUrl, setImageUrl] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -424,6 +442,7 @@ function EventsManagement() {
         event_date: eventDate,
         event_time: eventTime,
         category,
+        image_url: imageUrl || null,
       }]);
 
       if (error) throw error;
@@ -435,6 +454,7 @@ function EventsManagement() {
       setEventDate("");
       setEventTime("");
       setCategory("community");
+      setImageUrl("");
     } catch (error) {
       toast.error("Failed to create event");
       console.error(error);
@@ -478,6 +498,13 @@ function EventsManagement() {
               required
             />
           </div>
+
+          <ImageUpload
+            bucket="event-images"
+            onUploadComplete={setImageUrl}
+            currentImageUrl={imageUrl}
+          />
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="event-date">Date</Label>
@@ -662,6 +689,7 @@ function ProjectsManagement() {
   const [description, setDescription] = useState("");
   const [targetAmount, setTargetAmount] = useState("");
   const [category, setCategory] = useState("infrastructure");
+  const [imageUrl, setImageUrl] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -674,6 +702,7 @@ function ProjectsManagement() {
         description,
         target_amount: parseInt(targetAmount),
         category,
+        image_url: imageUrl || null,
       }]);
 
       if (error) throw error;
@@ -683,6 +712,7 @@ function ProjectsManagement() {
       setDescription("");
       setTargetAmount("");
       setCategory("infrastructure");
+      setImageUrl("");
     } catch (error) {
       toast.error("Failed to create project");
       console.error(error);
@@ -718,6 +748,13 @@ function ProjectsManagement() {
               rows={4}
             />
           </div>
+
+          <ImageUpload
+            bucket="project-images"
+            onUploadComplete={setImageUrl}
+            currentImageUrl={imageUrl}
+          />
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="target-amount">Target Amount (KSh)</Label>

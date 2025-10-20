@@ -155,6 +155,7 @@ export type Database = {
           event_date: string
           event_time: string
           id: string
+          image_url: string | null
           location: string
           priority: string | null
           title: string
@@ -167,6 +168,7 @@ export type Database = {
           event_date: string
           event_time: string
           id?: string
+          image_url?: string | null
           location: string
           priority?: string | null
           title: string
@@ -179,6 +181,7 @@ export type Database = {
           event_date?: string
           event_time?: string
           id?: string
+          image_url?: string | null
           location?: string
           priority?: string | null
           title?: string
@@ -270,6 +273,7 @@ export type Database = {
           created_at: string | null
           excerpt: string
           id: string
+          image_url: string | null
           priority: string | null
           title: string
           updated_at: string | null
@@ -280,6 +284,7 @@ export type Database = {
           created_at?: string | null
           excerpt: string
           id?: string
+          image_url?: string | null
           priority?: string | null
           title: string
           updated_at?: string | null
@@ -290,6 +295,7 @@ export type Database = {
           created_at?: string | null
           excerpt?: string
           id?: string
+          image_url?: string | null
           priority?: string | null
           title?: string
           updated_at?: string | null
@@ -367,6 +373,7 @@ export type Database = {
           created_at: string | null
           description: string
           id: string
+          image_url: string | null
           raised_amount: number | null
           status: string | null
           target_amount: number
@@ -378,6 +385,7 @@ export type Database = {
           created_at?: string | null
           description: string
           id?: string
+          image_url?: string | null
           raised_amount?: number | null
           status?: string | null
           target_amount: number
@@ -389,6 +397,7 @@ export type Database = {
           created_at?: string | null
           description?: string
           id?: string
+          image_url?: string | null
           raised_amount?: number | null
           status?: string | null
           target_amount?: number
