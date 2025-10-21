@@ -44,10 +44,56 @@ export default function Home() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [news, setNews] = useState<NewsArticle[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
+  const [stats, setStats] = useState({
+    members: 0,
+    fundsRaised: 0,
+    activeProjects: 0,
+    eventsThisMonth: 0
+  });
 
   useEffect(() => {
     fetchData();
+    fetchStats();
   }, []);
+
+  const fetchStats = async () => {
+    // Count active members
+    const { count: membersCount } = await supabase
+      .from("profiles")
+      .select("*", { count: "exact", head: true });
+
+    // Sum total funds raised from completed donations
+    const { data: donationsData } = await supabase
+      .from("donations")
+      .select("amount")
+      .eq("status", "completed");
+
+    const totalRaised = donationsData?.reduce((sum, d) => sum + d.amount, 0) || 0;
+
+    // Count active projects
+    const { count: projectsCount } = await supabase
+      .from("projects")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "active");
+
+    // Count events this month
+    const now = new Date();
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+    
+    const { count: eventsCount } = await supabase
+      .from("events")
+      .select("*", { count: "exact", head: true })
+      .gte("event_date", firstDay)
+      .lte("event_date", lastDay);
+
+    setStats({
+      members: membersCount || 0,
+      fundsRaised: totalRaised,
+      activeProjects: projectsCount || 0,
+      eventsThisMonth: eventsCount || 0
+    });
+  };
 
   const fetchData = async () => {
     // Fetch active projects
@@ -126,10 +172,10 @@ export default function Home() {
       <section className="container mx-auto px-4 -mt-12 relative z-10">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[
-            { icon: Users, label: "Active Members", value: "2,450+", color: "bg-primary" },
-            { icon: DollarSign, label: "Funds Raised", value: "KSh 1.2M", color: "bg-secondary" },
-            { icon: TrendingUp, label: "Projects Active", value: "8", color: "bg-accent" },
-            { icon: Calendar, label: "Events This Month", value: "12", color: "bg-primary-light" },
+            { icon: Users, label: "Active Members", value: stats.members.toLocaleString(), color: "bg-primary" },
+            { icon: DollarSign, label: "Funds Raised", value: `KSh ${stats.fundsRaised.toLocaleString()}`, color: "bg-secondary" },
+            { icon: TrendingUp, label: "Projects Active", value: stats.activeProjects.toString(), color: "bg-accent" },
+            { icon: Calendar, label: "Events This Month", value: stats.eventsThisMonth.toString(), color: "bg-primary-light" },
           ].map((stat, index) => (
             <Card key={index} className="shadow-medium">
               <CardContent className="p-6">
