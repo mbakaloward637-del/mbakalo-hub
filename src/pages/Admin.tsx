@@ -105,6 +105,8 @@ export default function Admin() {
           <TabsTrigger value="events">Events</TabsTrigger>
           <TabsTrigger value="funerals">Funerals</TabsTrigger>
           <TabsTrigger value="projects">Projects</TabsTrigger>
+          <TabsTrigger value="leaders">Leaders</TabsTrigger>
+          <TabsTrigger value="youth">Youth</TabsTrigger>
         </TabsList>
 
         <TabsContent value="analytics">
@@ -129,6 +131,14 @@ export default function Admin() {
 
         <TabsContent value="projects">
           <ProjectsManagement />
+        </TabsContent>
+
+        <TabsContent value="leaders">
+          <LeadersManagement />
+        </TabsContent>
+
+        <TabsContent value="youth">
+          <YouthManagement />
         </TabsContent>
       </Tabs>
     </div>
@@ -784,6 +794,301 @@ function ProjectsManagement() {
           <Button type="submit" disabled={loading}>
             {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
             Create Project
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
+  );
+}
+
+function LeadersManagement() {
+  const [name, setName] = useState("");
+  const [position, setPosition] = useState("");
+  const [role, setRole] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [office, setOffice] = useState("");
+  const [hours, setHours] = useState("");
+  const [priority, setPriority] = useState("normal");
+  const [creating, setCreating] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCreating(true);
+
+    try {
+      const { error } = await supabase
+        .from("leaders")
+        .insert([
+          {
+            name,
+            position,
+            role,
+            email,
+            phone,
+            office,
+            hours,
+            priority,
+          },
+        ]);
+
+      if (error) throw error;
+
+      toast.success("Leader profile created successfully!");
+      
+      setName("");
+      setPosition("");
+      setRole("");
+      setEmail("");
+      setPhone("");
+      setOffice("");
+      setHours("");
+      setPriority("normal");
+    } catch (error) {
+      console.error("Error creating leader:", error);
+      toast.error("Failed to create leader profile");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Create Leader Profile</CardTitle>
+        <CardDescription>Add new ward leader information</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="leader-name">Full Name</Label>
+              <Input
+                id="leader-name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Hon. Jane Wanjiku"
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="leader-position">Position</Label>
+              <Input
+                id="leader-position"
+                value={position}
+                onChange={(e) => setPosition(e.target.value)}
+                placeholder="Member of County Assembly"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="leader-role">Role</Label>
+              <Input
+                id="leader-role"
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                placeholder="Ward Representative"
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="leader-priority">Priority</Label>
+              <Select value={priority} onValueChange={setPriority}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="normal">Normal</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="leader-email">Email</Label>
+              <Input
+                id="leader-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="mca@mbakaloward.go.ke"
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="leader-phone">Phone</Label>
+              <Input
+                id="leader-phone"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="+254 712 345 678"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="leader-office">Office Location</Label>
+              <Input
+                id="leader-office"
+                value={office}
+                onChange={(e) => setOffice(e.target.value)}
+                placeholder="Mbakalo Ward Office"
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="leader-hours">Office Hours</Label>
+              <Input
+                id="leader-hours"
+                value={hours}
+                onChange={(e) => setHours(e.target.value)}
+                placeholder="Mon-Fri: 9AM - 5PM"
+                required
+              />
+            </div>
+          </div>
+
+          <Button type="submit" disabled={creating}>
+            {creating ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Creating...
+              </>
+            ) : (
+              "Create Leader Profile"
+            )}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
+  );
+}
+
+function YouthManagement() {
+  const [title, setTitle] = useState("");
+  const [company, setCompany] = useState("");
+  const [type, setType] = useState("");
+  const [duration, setDuration] = useState("");
+  const [stipend, setStipend] = useState("");
+  const [creating, setCreating] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCreating(true);
+
+    try {
+      const { error } = await supabase
+        .from("youth_opportunities")
+        .insert([
+          {
+            title,
+            company,
+            type,
+            duration,
+            stipend,
+          },
+        ]);
+
+      if (error) throw error;
+
+      toast.success("Youth opportunity created successfully!");
+      
+      setTitle("");
+      setCompany("");
+      setType("");
+      setDuration("");
+      setStipend("");
+    } catch (error) {
+      console.error("Error creating opportunity:", error);
+      toast.error("Failed to create youth opportunity");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Create Youth Opportunity</CardTitle>
+        <CardDescription>Add new job, internship, or volunteer opportunity for youth</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="opportunity-title">Title</Label>
+            <Input
+              id="opportunity-title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="ICT Intern"
+              required
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="opportunity-company">Company/Organization</Label>
+            <Input
+              id="opportunity-company"
+              value={company}
+              onChange={(e) => setCompany(e.target.value)}
+              placeholder="County Government"
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <Label htmlFor="opportunity-type">Type</Label>
+              <Select value={type} onValueChange={setType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Internship">Internship</SelectItem>
+                  <SelectItem value="Volunteer">Volunteer</SelectItem>
+                  <SelectItem value="Contract">Contract</SelectItem>
+                  <SelectItem value="Full-time">Full-time</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="opportunity-duration">Duration</Label>
+              <Input
+                id="opportunity-duration"
+                value={duration}
+                onChange={(e) => setDuration(e.target.value)}
+                placeholder="6 months"
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="opportunity-stipend">Compensation</Label>
+              <Input
+                id="opportunity-stipend"
+                value={stipend}
+                onChange={(e) => setStipend(e.target.value)}
+                placeholder="KSh 15,000/month"
+                required
+              />
+            </div>
+          </div>
+
+          <Button type="submit" disabled={creating}>
+            {creating ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Creating...
+              </>
+            ) : (
+              "Create Opportunity"
+            )}
           </Button>
         </form>
       </CardContent>

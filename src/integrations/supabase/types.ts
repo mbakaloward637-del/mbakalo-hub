@@ -233,6 +233,45 @@ export type Database = {
         }
         Relationships: []
       }
+      leaders: {
+        Row: {
+          created_at: string | null
+          email: string
+          hours: string
+          id: string
+          name: string
+          office: string
+          phone: string
+          position: string
+          priority: string | null
+          role: string
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          hours: string
+          id?: string
+          name: string
+          office: string
+          phone: string
+          position: string
+          priority?: string | null
+          role: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          hours?: string
+          id?: string
+          name?: string
+          office?: string
+          phone?: string
+          position?: string
+          priority?: string | null
+          role?: string
+        }
+        Relationships: []
+      }
       moderation_queue: {
         Row: {
           content_id: string
@@ -424,6 +463,36 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      youth_opportunities: {
+        Row: {
+          company: string
+          created_at: string | null
+          duration: string
+          id: string
+          stipend: string
+          title: string
+          type: string
+        }
+        Insert: {
+          company: string
+          created_at?: string | null
+          duration: string
+          id?: string
+          stipend: string
+          title: string
+          type: string
+        }
+        Update: {
+          company?: string
+          created_at?: string | null
+          duration?: string
+          id?: string
+          stipend?: string
+          title?: string
+          type?: string
         }
         Relationships: []
       }
