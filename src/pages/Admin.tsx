@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { Loader2, Users, Newspaper, Calendar, Heart, DollarSign, Shield, CheckCircle, AlertCircle, XCircle, BarChart3 } from "lucide-react";
 import AnalyticsDashboard from "@/components/admin/AnalyticsDashboard";
 import ImageUpload from "@/components/admin/ImageUpload";
+import GalleryManagement from "@/components/admin/GalleryManagement";
 
 export default function Admin() {
   const navigate = useNavigate();
@@ -107,6 +108,7 @@ export default function Admin() {
           <TabsTrigger value="projects">Projects</TabsTrigger>
           <TabsTrigger value="leaders">Leaders</TabsTrigger>
           <TabsTrigger value="youth">Youth</TabsTrigger>
+          <TabsTrigger value="gallery">Gallery</TabsTrigger>
         </TabsList>
 
         <TabsContent value="analytics">
@@ -139,6 +141,10 @@ export default function Admin() {
 
         <TabsContent value="youth">
           <YouthManagement />
+        </TabsContent>
+
+        <TabsContent value="gallery">
+          <GalleryManagement />
         </TabsContent>
       </Tabs>
     </div>

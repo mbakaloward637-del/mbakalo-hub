@@ -43,6 +43,7 @@ interface Post {
   status: keyof typeof statusConfig;
   category: string;
   created_at: string;
+  user_id: string;
   profiles: {
     full_name: string;
   };
@@ -53,6 +54,7 @@ interface Comment {
   id: string;
   content: string;
   created_at: string;
+  user_id: string;
   profiles: {
     full_name: string;
   };
@@ -95,6 +97,7 @@ const GossipNew = () => {
           id,
           content,
           created_at,
+          user_id,
           profiles(full_name)
         )
       `)
@@ -385,10 +388,35 @@ const GossipNew = () => {
                       )}
                     </div>
                   </div>
-                  <Badge variant={statusConfig[post.status].variant}>
-                    <StatusIcon className="w-3 h-3 mr-1" />
-                    {statusConfig[post.status].label}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={statusConfig[post.status].variant}>
+                      <StatusIcon className="w-3 h-3 mr-1" />
+                      {statusConfig[post.status].label}
+                    </Badge>
+                    {user && post.user_id === user.id && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={async () => {
+                          try {
+                            const { error } = await supabase
+                              .from("posts")
+                              .delete()
+                              .eq("id", post.id);
+                            
+                            if (error) throw error;
+                            toast({ title: "Post deleted" });
+                            fetchPosts();
+                          } catch (error) {
+                            toast({ title: "Failed to delete", variant: "destructive" });
+                          }
+                        }}
+                        className="text-destructive"
+                      >
+                        Delete
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
@@ -419,9 +447,34 @@ const GossipNew = () => {
                             <span className="font-semibold text-sm">
                               {comment.profiles?.full_name || "Anonymous"}
                             </span>
-                            <span className="text-xs text-muted-foreground">
-                              {new Date(comment.created_at).toLocaleDateString()}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-muted-foreground">
+                                {new Date(comment.created_at).toLocaleDateString()}
+                              </span>
+                              {user && comment.user_id === user.id && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={async () => {
+                                    try {
+                                      const { error } = await supabase
+                                        .from("comments")
+                                        .delete()
+                                        .eq("id", comment.id);
+                                      
+                                      if (error) throw error;
+                                      toast({ title: "Comment deleted" });
+                                      fetchPosts();
+                                    } catch (error) {
+                                      toast({ title: "Failed to delete", variant: "destructive" });
+                                    }
+                                  }}
+                                  className="h-6 px-2 text-destructive"
+                                >
+                                  Delete
+                                </Button>
+                              )}
+                            </div>
                           </div>
                           <p className="text-sm">{comment.content}</p>
                         </div>

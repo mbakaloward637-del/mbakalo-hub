@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { Upload, Loader2, X } from "lucide-react";
 
 interface ImageUploadProps {
-  bucket: "news-images" | "event-images" | "project-images";
+  bucket: "news-images" | "event-images" | "project-images" | "gallery-images";
   onUploadComplete: (url: string) => void;
   currentImageUrl?: string;
 }

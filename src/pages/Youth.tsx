@@ -1,117 +1,152 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Briefcase, GraduationCap, Users, TrendingUp, Clock, DollarSign } from "lucide-react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Briefcase, Award, Users, TrendingUp } from "lucide-react";
+import { toast } from "sonner";
 
 export default function Youth() {
-  const { data: opportunities = [], isLoading } = useQuery({
-    queryKey: ['youth-opportunities'],
+  const [userId, setUserId] = useState<string | null>(null);
+  const [registrations, setRegistrations] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    checkUser();
+  }, []);
+
+  const checkUser = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      setUserId(user.id);
+      
+      const { data } = await supabase
+        .from("youth_registrations")
+        .select("opportunity_id")
+        .eq("user_id", user.id);
+      
+      if (data) {
+        setRegistrations(new Set(data.map(r => r.opportunity_id)));
+      }
+    }
+  };
+
+  const { data: opportunities, isLoading } = useQuery({
+    queryKey: ["youth-opportunities"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('youth_opportunities')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
+        .from("youth_opportunities")
+        .select("*")
+        .order("created_at", { ascending: false });
+
       if (error) throw error;
-      return data;
+      return data || [];
     },
   });
 
+  const handleRegister = async (opportunityId: string) => {
+    if (!userId) {
+      toast.error("Please login to register");
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("youth_registrations")
+        .insert({
+          user_id: userId,
+          opportunity_id: opportunityId,
+          status: "pending"
+        });
+
+      if (error) throw error;
+
+      setRegistrations(new Set([...registrations, opportunityId]));
+      toast.success("Registered successfully!");
+    } catch (error) {
+      console.error("Error registering:", error);
+      toast.error("Failed to register");
+    }
+  };
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-4">Youth Development</h1>
-        <p className="text-lg text-muted-foreground">
-          Skills, opportunities, and empowerment for Mbakalo youth
-        </p>
-      </div>
+    <div className="min-h-screen bg-background py-8">
+      <div className="container mx-auto px-4">
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold mb-2">Youth Development</h1>
+          <p className="text-muted-foreground">Empowering the next generation</p>
+        </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-12">
-        {[
-          { label: "Youth Members", value: "450+", icon: Users, color: "bg-primary" },
-          { label: "Training Programs", value: "12", icon: GraduationCap, color: "bg-secondary" },
-          { label: "Job Placements", value: "89", icon: Briefcase, color: "bg-accent" },
-          { label: "Businesses Started", value: "34", icon: TrendingUp, color: "bg-primary-light" },
-        ].map((stat, index) => (
-          <Card key={index} className="shadow-medium">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3">
-                <div className={`${stat.color} p-3 rounded-lg`}>
-                  <stat.icon className="h-5 w-5 text-white" />
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-12">
+          {[
+            { icon: Users, label: "Youth Members", value: "450+", color: "bg-primary" },
+            { icon: TrendingUp, label: "Active Projects", value: "12", color: "bg-secondary" },
+            { icon: Briefcase, label: "Job Placements", value: "89", color: "bg-accent" },
+            { icon: Award, label: "Success Stories", value: "34", color: "bg-primary-light" },
+          ].map((stat, index) => (
+            <Card key={index}>
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3">
+                  <div className={`${stat.color} p-3 rounded-lg`}>
+                    <stat.icon className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{stat.value}</p>
+                    <p className="text-xs text-muted-foreground">{stat.label}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-2xl font-bold">{stat.value}</p>
-                  <p className="text-xs text-muted-foreground">{stat.label}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
 
-      {/* Job Opportunities */}
-      <div className="mb-12">
-        <h2 className="text-2xl font-bold mb-6">Current Opportunities</h2>
-        {isLoading ? (
-          <div className="text-center py-8">Loading opportunities...</div>
-        ) : opportunities.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">No opportunities available</div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {opportunities.map((opportunity) => (
-              <Card key={opportunity.id} className="shadow-medium">
-                <CardHeader>
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <Badge variant={opportunity.type === "Internship" ? "default" : "secondary"}>
-                      {opportunity.type}
-                    </Badge>
-                  </div>
-                  <CardTitle className="text-lg">{opportunity.title}</CardTitle>
-                  <CardDescription>{opportunity.company}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-2 text-sm">
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground flex items-center gap-1">
-                      <Clock className="h-4 w-4" />
-                      Duration:
-                    </span>
-                    <span>{opportunity.duration}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground flex items-center gap-1">
-                      <DollarSign className="h-4 w-4" />
-                      Compensation:
-                    </span>
-                    <span className="font-medium">{opportunity.stipend}</span>
-                  </div>
-                  <Button variant="outline" className="w-full mt-3">
-                    View Details
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold mb-4">Current Opportunities</h2>
+          {isLoading ? (
+            <div className="text-center py-8">Loading...</div>
+          ) : opportunities && opportunities.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {opportunities.map((opp: any) => (
+                <Card key={opp.id}>
+                  <CardHeader>
+                    <CardTitle className="text-lg">{opp.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground">{opp.company}</p>
+                    <div className="flex gap-2 mt-2">
+                      <Badge variant="outline">{opp.type}</Badge>
+                      <Badge variant="secondary">{opp.duration}</Badge>
+                    </div>
+                    <p className="text-lg font-semibold text-primary mt-2">{opp.stipend}</p>
+                    
+                    {userId && (
+                      <Button 
+                        className="w-full mt-4" 
+                        onClick={() => handleRegister(opp.id)}
+                        disabled={registrations.has(opp.id)}
+                      >
+                        {registrations.has(opp.id) ? "Already Registered" : "Register"}
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <p className="text-center text-muted-foreground">No opportunities available at the moment</p>
+          )}
+        </div>
 
-      {/* CTA Section */}
-      <Card className="shadow-strong mt-12 bg-gradient-primary text-primary-foreground">
-        <CardHeader>
-          <CardTitle className="text-2xl">Join Mbakalo Youth Network</CardTitle>
-          <CardDescription className="text-primary-foreground/90">
-            Connect with fellow youth, access exclusive opportunities, and shape your future
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button variant="secondary" size="lg">
-            Register Now
-          </Button>
-        </CardContent>
-      </Card>
+        <Card className="bg-primary text-primary-foreground">
+          <CardHeader>
+            <CardTitle className="text-2xl">Join Mbakalo Youth Network</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">Connect with fellow youth and access exclusive opportunities</p>
+            <Button variant="secondary">Register Now</Button>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
