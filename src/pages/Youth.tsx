@@ -4,15 +4,23 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Briefcase, Award, Users, TrendingUp } from "lucide-react";
+import { Briefcase, Award, Users, TrendingUp, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Youth() {
   const [userId, setUserId] = useState<string | null>(null);
   const [registrations, setRegistrations] = useState<Set<string>>(new Set());
+  const [stats, setStats] = useState({
+    youthMembers: 0,
+    activeOpportunities: 0,
+    totalRegistrations: 0,
+    acceptedRegistrations: 0
+  });
+  const [statsLoading, setStatsLoading] = useState(true);
 
   useEffect(() => {
     checkUser();
+    fetchStats();
   }, []);
 
   const checkUser = async () => {
@@ -29,6 +37,40 @@ export default function Youth() {
         setRegistrations(new Set(data.map(r => r.opportunity_id)));
       }
     }
+  };
+
+  const fetchStats = async () => {
+    setStatsLoading(true);
+    
+    // Count youth members from profiles
+    const { count: membersCount } = await supabase
+      .from("profiles")
+      .select("*", { count: "exact", head: true });
+
+    // Count active opportunities
+    const { count: opportunitiesCount } = await supabase
+      .from("youth_opportunities")
+      .select("*", { count: "exact", head: true });
+
+    // Count total registrations
+    const { count: registrationsCount } = await supabase
+      .from("youth_registrations")
+      .select("*", { count: "exact", head: true });
+
+    // Count accepted/completed registrations
+    const { count: acceptedCount } = await supabase
+      .from("youth_registrations")
+      .select("*", { count: "exact", head: true })
+      .in("status", ["accepted", "completed"]);
+
+    setStats({
+      youthMembers: membersCount || 0,
+      activeOpportunities: opportunitiesCount || 0,
+      totalRegistrations: registrationsCount || 0,
+      acceptedRegistrations: acceptedCount || 0
+    });
+    
+    setStatsLoading(false);
   };
 
   const { data: opportunities, isLoading } = useQuery({
@@ -78,26 +120,69 @@ export default function Youth() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-12">
-          {[
-            { icon: Users, label: "Youth Members", value: "450+", color: "bg-primary" },
-            { icon: TrendingUp, label: "Active Projects", value: "12", color: "bg-secondary" },
-            { icon: Briefcase, label: "Job Placements", value: "89", color: "bg-accent" },
-            { icon: Award, label: "Success Stories", value: "34", color: "bg-primary-light" },
-          ].map((stat, index) => (
-            <Card key={index}>
-              <CardContent className="p-6">
-                <div className="flex items-center gap-3">
-                  <div className={`${stat.color} p-3 rounded-lg`}>
-                    <stat.icon className="h-5 w-5 text-white" />
+          {statsLoading ? (
+            <div className="col-span-4 flex justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+          ) : (
+            <>
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-primary p-3 rounded-lg">
+                      <Users className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold">{stats.youthMembers}</p>
+                      <p className="text-xs text-muted-foreground">Youth Members</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-2xl font-bold">{stat.value}</p>
-                    <p className="text-xs text-muted-foreground">{stat.label}</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-secondary p-3 rounded-lg">
+                      <TrendingUp className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold">{stats.activeOpportunities}</p>
+                      <p className="text-xs text-muted-foreground">Active Opportunities</p>
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-accent p-3 rounded-lg">
+                      <Briefcase className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold">{stats.totalRegistrations}</p>
+                      <p className="text-xs text-muted-foreground">Total Registrations</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-primary-light p-3 rounded-lg">
+                      <Award className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold">{stats.acceptedRegistrations}</p>
+                      <p className="text-xs text-muted-foreground">Successful Placements</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </>
+          )}
         </div>
 
         <div className="mb-8">
