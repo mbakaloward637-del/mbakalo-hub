@@ -13,6 +13,9 @@ import { Loader2, Users, Newspaper, Calendar, Heart, DollarSign, Shield, CheckCi
 import AnalyticsDashboard from "@/components/admin/AnalyticsDashboard";
 import ImageUpload from "@/components/admin/ImageUpload";
 import GalleryManagement from "@/components/admin/GalleryManagement";
+import { DashboardOverview } from "@/components/admin/DashboardOverview";
+import { BeneficiaryManagement } from "@/components/admin/BeneficiaryManagement";
+import { DonationsInventoryManagement } from "@/components/admin/DonationsInventoryManagement";
 
 export default function Admin() {
   const navigate = useNavigate();
@@ -98,8 +101,11 @@ export default function Admin() {
       </div>
 
       {/* Management Tabs */}
-      <Tabs defaultValue="analytics" className="space-y-4">
+      <Tabs defaultValue="dashboard" className="space-y-4">
         <TabsList>
+          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+          <TabsTrigger value="beneficiaries">Beneficiaries</TabsTrigger>
+          <TabsTrigger value="donations">Donations</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
           <TabsTrigger value="moderation">Moderation</TabsTrigger>
           <TabsTrigger value="news">News</TabsTrigger>
@@ -110,6 +116,18 @@ export default function Admin() {
           <TabsTrigger value="youth">Youth</TabsTrigger>
           <TabsTrigger value="gallery">Gallery</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="dashboard">
+          <DashboardOverview />
+        </TabsContent>
+
+        <TabsContent value="beneficiaries">
+          <BeneficiaryManagement />
+        </TabsContent>
+
+        <TabsContent value="donations">
+          <DonationsInventoryManagement />
+        </TabsContent>
 
         <TabsContent value="analytics">
           <AnalyticsDashboard />
