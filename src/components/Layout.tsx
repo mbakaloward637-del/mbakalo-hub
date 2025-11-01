@@ -197,29 +197,29 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
           <div className="container mx-auto px-4 py-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div>
-                <h3 className="font-bold mb-3 text-accent text-lg drop-shadow-lg">Mbakalo Rescue Team</h3>
-                <p className="text-sm text-accent drop-shadow-md">
+                <h3 className="font-bold mb-3 text-primary text-lg drop-shadow-lg">Mbakalo Rescue Team</h3>
+                <p className="text-sm text-primary drop-shadow-md">
                   Connecting our community through transparency, participation, and development.
                 </p>
               </div>
               <div>
-                <h3 className="font-bold mb-3 text-accent text-lg drop-shadow-lg">Quick Links</h3>
+                <h3 className="font-bold mb-3 text-primary text-lg drop-shadow-lg">Quick Links</h3>
                 <ul className="space-y-2 text-sm">
-                  <li><Link to="/news" className="text-accent drop-shadow-md hover:text-accent/80 transition-colors">Latest News</Link></li>
-                  <li><Link to="/events" className="text-accent drop-shadow-md hover:text-accent/80 transition-colors">Upcoming Events</Link></li>
-                  <li><Link to="/leaders" className="text-accent drop-shadow-md hover:text-accent/80 transition-colors">Ward Leaders</Link></li>
+                  <li><Link to="/news" className="text-primary drop-shadow-md hover:text-primary/80 transition-colors">Latest News</Link></li>
+                  <li><Link to="/events" className="text-primary drop-shadow-md hover:text-primary/80 transition-colors">Upcoming Events</Link></li>
+                  <li><Link to="/leaders" className="text-primary drop-shadow-md hover:text-primary/80 transition-colors">Ward Leaders</Link></li>
                 </ul>
               </div>
               <div>
-                <h3 className="font-bold mb-3 text-accent text-lg drop-shadow-lg">Contact</h3>
-                <p className="text-sm text-accent drop-shadow-md">
+                <h3 className="font-bold mb-3 text-primary text-lg drop-shadow-lg">Contact</h3>
+                <p className="text-sm text-primary drop-shadow-md">
                   Ward Office Hours: Mon-Fri, 8AM-5PM
                 </p>
               </div>
             </div>
-            <div className="border-t border-accent/30 mt-8 pt-8 text-center text-sm">
-              <p className="text-accent font-medium drop-shadow-lg">© 2025 Mbakalo Rescue Team. Built for the people, by the people.</p>
-              <p className="mt-2 text-accent drop-shadow-md">Developed By <span className="text-accent font-semibold">Laban Panda Khisa</span></p>
+            <div className="border-t border-primary/30 mt-8 pt-8 text-center text-sm">
+              <p className="text-primary font-medium drop-shadow-lg">© 2025 Mbakalo Rescue Team. Built for the people, by the people.</p>
+              <p className="mt-2 text-primary drop-shadow-md">Developed By <span className="text-primary font-semibold">Laban Panda Khisa</span></p>
             </div>
           </div>
         </div>
