@@ -184,42 +184,42 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
       {/* Footer */}
       <footer className="border-t mt-16 relative overflow-hidden">
         <div 
-          className="absolute inset-0 opacity-50 animate-wave"
+          className="absolute inset-0 opacity-90 animate-wave"
           style={{
             backgroundImage: `url(${kenyaFlag})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',
-            filter: 'brightness(1.1) contrast(1.2)'
+            filter: 'brightness(1.2) contrast(1.1)'
           }}
         />
-        <div className="relative bg-gradient-to-b from-background/80 via-background/85 to-background/90 backdrop-blur-md">
+        <div className="relative bg-background/30">
           <div className="container mx-auto px-4 py-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div>
-                <h3 className="font-bold mb-3 text-accent text-lg">Mbakalo Rescue Team</h3>
-                <p className="text-sm text-foreground/80">
+                <h3 className="font-bold mb-3 text-accent text-lg drop-shadow-lg">Mbakalo Rescue Team</h3>
+                <p className="text-sm text-accent drop-shadow-md">
                   Connecting our community through transparency, participation, and development.
                 </p>
               </div>
               <div>
-                <h3 className="font-bold mb-3 text-accent text-lg">Quick Links</h3>
+                <h3 className="font-bold mb-3 text-accent text-lg drop-shadow-lg">Quick Links</h3>
                 <ul className="space-y-2 text-sm">
-                  <li><Link to="/news" className="text-foreground/80 hover:text-accent transition-colors">Latest News</Link></li>
-                  <li><Link to="/events" className="text-foreground/80 hover:text-accent transition-colors">Upcoming Events</Link></li>
-                  <li><Link to="/leaders" className="text-foreground/80 hover:text-accent transition-colors">Ward Leaders</Link></li>
+                  <li><Link to="/news" className="text-accent drop-shadow-md hover:text-accent/80 transition-colors">Latest News</Link></li>
+                  <li><Link to="/events" className="text-accent drop-shadow-md hover:text-accent/80 transition-colors">Upcoming Events</Link></li>
+                  <li><Link to="/leaders" className="text-accent drop-shadow-md hover:text-accent/80 transition-colors">Ward Leaders</Link></li>
                 </ul>
               </div>
               <div>
-                <h3 className="font-bold mb-3 text-accent text-lg">Contact</h3>
-                <p className="text-sm text-foreground/80">
+                <h3 className="font-bold mb-3 text-accent text-lg drop-shadow-lg">Contact</h3>
+                <p className="text-sm text-accent drop-shadow-md">
                   Ward Office Hours: Mon-Fri, 8AM-5PM
                 </p>
               </div>
             </div>
-            <div className="border-t border-accent/20 mt-8 pt-8 text-center text-sm">
-              <p className="text-accent font-medium">© 2025 Mbakalo Rescue Team. Built for the people, by the people.</p>
-              <p className="mt-2 text-foreground/80">Developed By <span className="text-accent font-semibold">Laban Panda Khisa</span></p>
+            <div className="border-t border-accent/30 mt-8 pt-8 text-center text-sm">
+              <p className="text-accent font-medium drop-shadow-lg">© 2025 Mbakalo Rescue Team. Built for the people, by the people.</p>
+              <p className="mt-2 text-accent drop-shadow-md">Developed By <span className="text-accent font-semibold">Laban Panda Khisa</span></p>
             </div>
           </div>
         </div>
