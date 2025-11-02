@@ -3,7 +3,6 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Home, Newspaper, Heart, MessageSquare, Calendar, Users, TrendingUp, Image, Menu, LogOut, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import kenyaFlag from "@/assets/kenya-flag.png";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
 
@@ -182,45 +181,33 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
       <main className="flex-1">{children}</main>
 
       {/* Footer */}
-      <footer className="border-t mt-16 relative overflow-hidden">
-        <div 
-          className="absolute inset-0 opacity-90 animate-wave"
-          style={{
-            backgroundImage: `url(${kenyaFlag})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat',
-            filter: 'brightness(1.2) contrast(1.1)'
-          }}
-        />
-        <div className="relative bg-background/30">
-          <div className="container mx-auto px-4 py-8">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div>
-                <h3 className="font-bold mb-3 text-primary text-lg drop-shadow-lg">Mbakalo Rescue Team</h3>
-                <p className="text-sm text-primary drop-shadow-md">
-                  Connecting our community through transparency, participation, and development.
-                </p>
-              </div>
-              <div>
-                <h3 className="font-bold mb-3 text-primary text-lg drop-shadow-lg">Quick Links</h3>
-                <ul className="space-y-2 text-sm">
-                  <li><Link to="/news" className="text-primary drop-shadow-md hover:text-primary/80 transition-colors">Latest News</Link></li>
-                  <li><Link to="/events" className="text-primary drop-shadow-md hover:text-primary/80 transition-colors">Upcoming Events</Link></li>
-                  <li><Link to="/leaders" className="text-primary drop-shadow-md hover:text-primary/80 transition-colors">Ward Leaders</Link></li>
-                </ul>
-              </div>
-              <div>
-                <h3 className="font-bold mb-3 text-primary text-lg drop-shadow-lg">Contact</h3>
-                <p className="text-sm text-primary drop-shadow-md">
-                  Ward Office Hours: Mon-Fri, 8AM-5PM
-                </p>
-              </div>
+      <footer className="border-t border-red-600 mt-16 bg-black">
+        <div className="container mx-auto px-4 py-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div>
+              <h3 className="font-bold mb-3 text-amber-400 text-lg">Mbakalo Rescue Team</h3>
+              <p className="text-sm text-white">
+                Connecting our community through transparency, participation, and development.
+              </p>
             </div>
-            <div className="border-t border-primary/30 mt-8 pt-8 text-center text-sm">
-              <p className="text-primary font-medium drop-shadow-lg">© 2025 Mbakalo Rescue Team. Built for the people, by the people.</p>
-              <p className="mt-2 text-primary drop-shadow-md">Developed By <span className="text-primary font-semibold">Laban Panda Khisa</span></p>
+            <div>
+              <h3 className="font-bold mb-3 text-amber-400 text-lg">Quick Links</h3>
+              <ul className="space-y-2 text-sm">
+                <li><Link to="/news" className="text-white hover:text-amber-400 transition-colors">Latest News</Link></li>
+                <li><Link to="/events" className="text-white hover:text-amber-400 transition-colors">Upcoming Events</Link></li>
+                <li><Link to="/leaders" className="text-white hover:text-amber-400 transition-colors">Ward Leaders</Link></li>
+              </ul>
             </div>
+            <div>
+              <h3 className="font-bold mb-3 text-amber-400 text-lg">Contact</h3>
+              <p className="text-sm text-white">
+                Ward Office Hours: Mon-Fri, 8AM-5PM
+              </p>
+            </div>
+          </div>
+          <div className="border-t border-red-600 mt-8 pt-8 text-center text-sm">
+            <p className="text-white font-medium">© 2025 Mbakalo Rescue Team. Built for the people, by the people.</p>
+            <p className="mt-2 text-white">Developed By <span className="text-amber-400 font-semibold">Laban Panda Khisa</span></p>
           </div>
         </div>
       </footer>
