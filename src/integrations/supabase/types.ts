@@ -741,6 +741,27 @@ export type Database = {
         }
         Relationships: []
       }
+      youth_chat_messages: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       youth_opportunities: {
         Row: {
           company: string
@@ -768,6 +789,39 @@ export type Database = {
           stipend?: string
           title?: string
           type?: string
+        }
+        Relationships: []
+      }
+      youth_profiles: {
+        Row: {
+          created_at: string
+          full_name: string
+          id: string
+          phone_number: string
+          profile_pic_url: string | null
+          updated_at: string
+          user_id: string
+          village: string
+        }
+        Insert: {
+          created_at?: string
+          full_name: string
+          id?: string
+          phone_number: string
+          profile_pic_url?: string | null
+          updated_at?: string
+          user_id: string
+          village: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string
+          id?: string
+          phone_number?: string
+          profile_pic_url?: string | null
+          updated_at?: string
+          user_id?: string
+          village?: string
         }
         Relationships: []
       }

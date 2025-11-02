@@ -4,12 +4,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Briefcase, Award, Users, TrendingUp, Loader2 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Briefcase, Award, Users, TrendingUp, Loader2, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
+import { YouthRegistrationForm } from "@/components/youth/YouthRegistrationForm";
+import { YouthChat } from "@/components/youth/YouthChat";
 
 export default function Youth() {
   const [userId, setUserId] = useState<string | null>(null);
   const [registrations, setRegistrations] = useState<Set<string>>(new Set());
+  const [hasYouthProfile, setHasYouthProfile] = useState<boolean | null>(null);
   const [stats, setStats] = useState({
     youthMembers: 0,
     activeOpportunities: 0,
@@ -28,6 +32,15 @@ export default function Youth() {
     if (user) {
       setUserId(user.id);
       
+      // Check if user has youth profile
+      const { data: youthProfile } = await supabase
+        .from("youth_profiles")
+        .select("id")
+        .eq("user_id", user.id)
+        .single();
+      
+      setHasYouthProfile(!!youthProfile);
+      
       const { data } = await supabase
         .from("youth_registrations")
         .select("opportunity_id")
@@ -36,6 +49,8 @@ export default function Youth() {
       if (data) {
         setRegistrations(new Set(data.map(r => r.opportunity_id)));
       }
+    } else {
+      setHasYouthProfile(false);
     }
   };
 
@@ -109,6 +124,11 @@ export default function Youth() {
       console.error("Error registering:", error);
       toast.error("Failed to register");
     }
+  };
+
+  const handleRegistrationSuccess = () => {
+    setHasYouthProfile(true);
+    fetchStats();
   };
 
   return (
@@ -185,52 +205,78 @@ export default function Youth() {
           )}
         </div>
 
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold mb-4">Current Opportunities</h2>
-          {isLoading ? (
-            <div className="text-center py-8">Loading...</div>
-          ) : opportunities && opportunities.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {opportunities.map((opp: any) => (
-                <Card key={opp.id}>
-                  <CardHeader>
-                    <CardTitle className="text-lg">{opp.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground">{opp.company}</p>
-                    <div className="flex gap-2 mt-2">
-                      <Badge variant="outline">{opp.type}</Badge>
-                      <Badge variant="secondary">{opp.duration}</Badge>
-                    </div>
-                    <p className="text-lg font-semibold text-primary mt-2">{opp.stipend}</p>
-                    
-                    {userId && (
-                      <Button 
-                        className="w-full mt-4" 
-                        onClick={() => handleRegister(opp.id)}
-                        disabled={registrations.has(opp.id)}
-                      >
-                        {registrations.has(opp.id) ? "Already Registered" : "Register"}
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <p className="text-center text-muted-foreground">No opportunities available at the moment</p>
-          )}
-        </div>
+        {/* Check if user has youth profile */}
+        {userId && hasYouthProfile === false ? (
+          <div className="mb-8">
+            <YouthRegistrationForm onSuccess={handleRegistrationSuccess} />
+          </div>
+        ) : hasYouthProfile ? (
+          <Tabs defaultValue="opportunities" className="mb-8">
+            <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto">
+              <TabsTrigger value="opportunities">
+                <Briefcase className="mr-2 h-4 w-4" />
+                Opportunities
+              </TabsTrigger>
+              <TabsTrigger value="chat">
+                <MessageCircle className="mr-2 h-4 w-4" />
+                Community Chat
+              </TabsTrigger>
+            </TabsList>
 
-        <Card className="bg-primary text-primary-foreground">
-          <CardHeader>
-            <CardTitle className="text-2xl">Join Mbakalo Youth Network</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="mb-4">Connect with fellow youth and access exclusive opportunities</p>
-            <Button variant="secondary">Register Now</Button>
-          </CardContent>
-        </Card>
+            <TabsContent value="opportunities" className="mt-6">
+              <h2 className="text-2xl font-bold mb-4">Current Opportunities</h2>
+              {isLoading ? (
+                <div className="text-center py-8">Loading...</div>
+              ) : opportunities && opportunities.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {opportunities.map((opp: any) => (
+                    <Card key={opp.id}>
+                      <CardHeader>
+                        <CardTitle className="text-lg">{opp.title}</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground">{opp.company}</p>
+                        <div className="flex gap-2 mt-2">
+                          <Badge variant="outline">{opp.type}</Badge>
+                          <Badge variant="secondary">{opp.duration}</Badge>
+                        </div>
+                        <p className="text-lg font-semibold text-primary mt-2">{opp.stipend}</p>
+                        
+                        <Button 
+                          className="w-full mt-4" 
+                          onClick={() => handleRegister(opp.id)}
+                          disabled={registrations.has(opp.id)}
+                        >
+                          {registrations.has(opp.id) ? "Already Registered" : "Register"}
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-center text-muted-foreground">No opportunities available at the moment</p>
+              )}
+            </TabsContent>
+
+            <TabsContent value="chat" className="mt-6">
+              <YouthChat />
+            </TabsContent>
+          </Tabs>
+        ) : (
+          <div className="text-center py-8">
+            <Card className="bg-primary text-primary-foreground max-w-2xl mx-auto">
+              <CardHeader>
+                <CardTitle className="text-2xl">Join Mbakalo Youth Network</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="mb-4">Sign in to register and connect with fellow youth</p>
+                <Button variant="secondary" onClick={() => window.location.href = '/auth'}>
+                  Sign In
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </div>
   );
