@@ -669,6 +669,69 @@ export type Database = {
         }
         Relationships: []
       }
+      rescue_team_chat_messages: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      rescue_team_members: {
+        Row: {
+          created_at: string
+          full_name: string
+          id: string
+          phone_number: string
+          profile_pic_url: string | null
+          rank: string
+          role: string
+          status: string
+          updated_at: string
+          user_id: string
+          village: string
+        }
+        Insert: {
+          created_at?: string
+          full_name: string
+          id?: string
+          phone_number: string
+          profile_pic_url?: string | null
+          rank?: string
+          role?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+          village: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string
+          id?: string
+          phone_number?: string
+          profile_pic_url?: string | null
+          rank?: string
+          role?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          village?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
