@@ -24,12 +24,14 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isRescueTeamMember, setIsRescueTeamMember] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       if (session?.user) {
         checkAdminStatus(session.user.id);
+        checkRescueTeamMembership(session.user.id);
       }
     });
 
@@ -39,9 +41,11 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
         if (session?.user) {
           setTimeout(() => {
             checkAdminStatus(session.user.id);
+            checkRescueTeamMembership(session.user.id);
           }, 0);
         } else {
           setIsAdmin(false);
+          setIsRescueTeamMember(false);
         }
       }
     );
@@ -60,6 +64,17 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
     setIsAdmin(!!data);
   };
 
+  const checkRescueTeamMembership = async (userId: string) => {
+    const { data } = await supabase
+      .from("rescue_team_members")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("status", "active")
+      .single();
+
+    setIsRescueTeamMember(!!data);
+  };
+
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     navigate("/auth");
@@ -68,6 +83,11 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   const NavLinks = () => (
     <>
       {navigation.map((item) => {
+        // Hide Rescue Team link unless user is admin or team member
+        if (item.href === "/rescue-team" && !isAdmin && !isRescueTeamMember) {
+          return null;
+        }
+        
         const isActive = location.pathname === item.href;
         const Icon = item.icon;
         return (

@@ -16,6 +16,7 @@ import GalleryManagement from "@/components/admin/GalleryManagement";
 import { DashboardOverview } from "@/components/admin/DashboardOverview";
 import { BeneficiaryManagement } from "@/components/admin/BeneficiaryManagement";
 import { DonationsInventoryManagement } from "@/components/admin/DonationsInventoryManagement";
+import { RescueTeamManagement } from "@/components/rescue-team/RescueTeamManagement";
 
 export default function Admin() {
   const navigate = useNavigate();
@@ -115,6 +116,7 @@ export default function Admin() {
           <TabsTrigger value="leaders">Leaders</TabsTrigger>
           <TabsTrigger value="youth">Youth</TabsTrigger>
           <TabsTrigger value="gallery">Gallery</TabsTrigger>
+          <TabsTrigger value="rescue-team">Rescue Team</TabsTrigger>
         </TabsList>
 
         <TabsContent value="dashboard">
@@ -163,6 +165,10 @@ export default function Admin() {
 
         <TabsContent value="gallery">
           <GalleryManagement />
+        </TabsContent>
+
+        <TabsContent value="rescue-team">
+          <RescueTeamManagement />
         </TabsContent>
       </Tabs>
     </div>
