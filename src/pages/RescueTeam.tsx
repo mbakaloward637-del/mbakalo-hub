@@ -52,69 +52,63 @@ const RescueTeam = () => {
 
   if (loading) {
     return (
-      <Layout>
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
-      </Layout>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
     );
   }
 
   if (!isAdmin && !isMember) {
     return (
-      <Layout>
-        <div className="min-h-screen flex items-center justify-center p-4">
-          <Card className="p-8 max-w-md text-center">
-            <Shield className="h-16 w-16 mx-auto mb-4 text-red-500" />
-            <h1 className="text-2xl font-bold mb-2">Access Restricted</h1>
-            <p className="text-muted-foreground">
-              This page is only accessible to Mbakalo Rescue Team members. Please contact an administrator if you believe you should have access.
-            </p>
-          </Card>
-        </div>
-      </Layout>
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Card className="p-8 max-w-md text-center">
+          <Shield className="h-16 w-16 mx-auto mb-4 text-red-500" />
+          <h1 className="text-2xl font-bold mb-2">Access Restricted</h1>
+          <p className="text-muted-foreground">
+            This page is only accessible to Mbakalo Rescue Team members. Please contact an administrator if you believe you should have access.
+          </p>
+        </Card>
+      </div>
     );
   }
 
   return (
-    <Layout>
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <Shield className="h-10 w-10 text-red-500" />
-            <h1 className="text-4xl font-bold">Mbakalo Rescue Team</h1>
-          </div>
-          <p className="text-muted-foreground text-lg">
-            Emergency response coordination and team management
-          </p>
+    <div className="container mx-auto px-4 py-8">
+      <div className="mb-8">
+        <div className="flex items-center gap-3 mb-2">
+          <Shield className="h-10 w-10 text-red-500" />
+          <h1 className="text-4xl font-bold">Mbakalo Rescue Team</h1>
         </div>
-
-        <Tabs defaultValue={isAdmin ? "management" : "chat"} className="space-y-6">
-          <TabsList className="grid w-full max-w-md" style={{ gridTemplateColumns: isAdmin ? '1fr 1fr' : '1fr' }}>
-            {isAdmin && (
-              <TabsTrigger value="management">
-                <Users className="h-4 w-4 mr-2" />
-                Team Management
-              </TabsTrigger>
-            )}
-            <TabsTrigger value="chat">
-              <MessageSquare className="h-4 w-4 mr-2" />
-              Team Chat
-            </TabsTrigger>
-          </TabsList>
-
-          {isAdmin && (
-            <TabsContent value="management">
-              <RescueTeamManagement />
-            </TabsContent>
-          )}
-
-          <TabsContent value="chat">
-            <RescueTeamChat />
-          </TabsContent>
-        </Tabs>
+        <p className="text-muted-foreground text-lg">
+          Emergency response coordination and team management
+        </p>
       </div>
-    </Layout>
+
+      <Tabs defaultValue={isAdmin ? "management" : "chat"} className="space-y-6">
+        <TabsList className="grid w-full max-w-md" style={{ gridTemplateColumns: isAdmin ? '1fr 1fr' : '1fr' }}>
+          {isAdmin && (
+            <TabsTrigger value="management">
+              <Users className="h-4 w-4 mr-2" />
+              Team Management
+            </TabsTrigger>
+          )}
+          <TabsTrigger value="chat">
+            <MessageSquare className="h-4 w-4 mr-2" />
+            Team Chat
+          </TabsTrigger>
+        </TabsList>
+
+        {isAdmin && (
+          <TabsContent value="management">
+            <RescueTeamManagement />
+          </TabsContent>
+        )}
+
+        <TabsContent value="chat">
+          <RescueTeamChat />
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 };
 
