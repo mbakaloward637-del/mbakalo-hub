@@ -23,6 +23,8 @@ interface Message {
     profile_pic_url: string | null;
     role: string;
     rank: string;
+    village: string;
+    phone_number: string;
   };
 }
 
@@ -101,7 +103,7 @@ export const RescueTeamChat = () => {
       
       const { data: members } = await supabase
         .from('rescue_team_members')
-        .select('user_id, full_name, profile_pic_url, role, rank')
+        .select('user_id, full_name, profile_pic_url, role, rank, village, phone_number')
         .in('user_id', userIds);
 
       const messagesWithProfiles = chatMessages?.map(msg => ({
@@ -251,22 +253,6 @@ export const RescueTeamChat = () => {
                     </Avatar>
                     
                     <div className={`flex flex-col ${isOwnMessage ? 'items-end' : 'items-start'} max-w-[70%]`}>
-                      <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <span className="text-sm font-medium">{displayName}</span>
-                        {member && (
-                          <>
-                            <Badge variant="secondary" className={`text-xs ${getRoleBadgeColor(member.role)} text-white`}>
-                              {member.role}
-                            </Badge>
-                            <Badge variant="outline" className="text-xs">
-                              {member.rank}
-                            </Badge>
-                          </>
-                        )}
-                        <span className="text-xs text-muted-foreground">
-                          {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true })}
-                        </span>
-                      </div>
                       <div
                         className={`rounded-2xl px-4 py-2 shadow-sm ${
                           isOwnMessage
@@ -276,6 +262,9 @@ export const RescueTeamChat = () => {
                       >
                         <p className="text-sm whitespace-pre-wrap break-words">{msg.message}</p>
                       </div>
+                      <span className="text-xs text-muted-foreground mt-1">
+                        {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true })}
+                      </span>
                     </div>
                   </div>
                 );
@@ -338,15 +327,26 @@ export const RescueTeamChat = () => {
                 </AvatarFallback>
               </Avatar>
               
-              <div className="text-center">
-                <h3 className="text-xl font-semibold">{selectedProfile.full_name}</h3>
-                <div className="flex gap-2 mt-2 justify-center flex-wrap">
-                  <Badge className={`${getRoleBadgeColor(selectedProfile.role)} text-white`}>
-                    {selectedProfile.role}
-                  </Badge>
-                  <Badge variant="outline">
-                    {selectedProfile.rank}
-                  </Badge>
+              <div className="text-center space-y-4">
+                <div>
+                  <h3 className="text-xl font-semibold">{selectedProfile.full_name}</h3>
+                  <div className="flex gap-2 mt-2 justify-center flex-wrap">
+                    <Badge className={`${getRoleBadgeColor(selectedProfile.role)} text-white`}>
+                      {selectedProfile.role}
+                    </Badge>
+                    <Badge variant="outline">
+                      {selectedProfile.rank}
+                    </Badge>
+                  </div>
+                </div>
+
+                <div className="space-y-2 text-sm">
+                  {selectedProfile.village && (
+                    <p><strong>Village:</strong> {selectedProfile.village}</p>
+                  )}
+                  {selectedProfile.phone_number && (
+                    <p><strong>Phone:</strong> {selectedProfile.phone_number}</p>
+                  )}
                 </div>
               </div>
             </div>

@@ -24,6 +24,8 @@ interface Message {
   youth_profiles?: {
     full_name: string;
     profile_pic_url: string | null;
+    village: string;
+    phone_number: string;
   };
 }
 
@@ -104,7 +106,7 @@ export const YouthChat = () => {
       
       const { data: youthProfiles } = await supabase
         .from('youth_profiles')
-        .select('user_id, full_name, profile_pic_url')
+        .select('user_id, full_name, profile_pic_url, village, phone_number')
         .in('user_id', userIds);
 
       const { data: profiles } = await supabase
@@ -253,12 +255,6 @@ export const YouthChat = () => {
                     </Avatar>
                     
                     <div className={`flex flex-col ${isOwnMessage ? 'items-end' : 'items-start'} max-w-[70%]`}>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-sm font-medium">{displayName}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true })}
-                        </span>
-                      </div>
                       <div
                         className={`rounded-2xl px-4 py-2 shadow-sm ${
                           isOwnMessage
@@ -268,6 +264,9 @@ export const YouthChat = () => {
                       >
                         <p className="text-sm whitespace-pre-wrap break-words">{msg.message}</p>
                       </div>
+                      <span className="text-xs text-muted-foreground mt-1">
+                        {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true })}
+                      </span>
                     </div>
                   </div>
                 );
