@@ -50,8 +50,9 @@ const Auth = () => {
     const email = formData.get("signup-email") as string;
     const password = formData.get("signup-password") as string;
     const fullName = formData.get("full-name") as string;
+    const village = formData.get("village") as string;
 
-    if (!email || !password || !fullName) {
+    if (!email || !password || !fullName || !village) {
       toast({
         title: "Error",
         description: "Please fill in all fields",
@@ -70,6 +71,7 @@ const Auth = () => {
         emailRedirectTo: redirectUrl,
         data: {
           full_name: fullName,
+          village: village,
         },
       },
     });
@@ -175,6 +177,16 @@ const Auth = () => {
                     name="full-name"
                     type="text"
                     placeholder="John Doe"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="village">Village</Label>
+                  <Input
+                    id="village"
+                    name="village"
+                    type="text"
+                    placeholder="Your village"
                     required
                   />
                 </div>
