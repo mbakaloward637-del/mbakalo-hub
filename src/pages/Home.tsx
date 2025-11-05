@@ -190,10 +190,10 @@ export default function Home() {
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
         
         <div className="relative container mx-auto px-4 h-full flex flex-col justify-center">
-          <h1 className="text-4xl md:text-6xl font-bold text-white mb-4 drop-shadow-lg">
-            Welcome to Mbakalo Ward
+          <h1 className="text-4xl md:text-6xl font-bold text-amber-400 mb-4 drop-shadow-lg">
+            Welcome to Mbakalo Rescue Team
           </h1>
-          <p className="text-xl text-white/95 mb-8 max-w-2xl drop-shadow-md">
+          <p className="text-xl text-amber-400/95 mb-8 max-w-2xl drop-shadow-md">
             Your digital home for community updates, transparent development, and staying connected.
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
