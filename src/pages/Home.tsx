@@ -13,8 +13,13 @@ import {
   Newspaper,
   ArrowRight
 } from "lucide-react";
-import heroImage from "@/assets/hero-community.jpg";
 import { supabase } from "@/integrations/supabase/client";
+
+interface GalleryImage {
+  id: string;
+  image_url: string;
+  title: string;
+}
 
 interface Project {
   id: string;
@@ -44,6 +49,8 @@ export default function Home() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [news, setNews] = useState<NewsArticle[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
+  const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [stats, setStats] = useState({
     members: 0,
     fundsRaised: 0,
@@ -54,7 +61,18 @@ export default function Home() {
   useEffect(() => {
     fetchData();
     fetchStats();
+    fetchGalleryImages();
   }, []);
+
+  useEffect(() => {
+    if (galleryImages.length > 0) {
+      const interval = setInterval(() => {
+        setCurrentImageIndex((prev) => (prev + 1) % galleryImages.length);
+      }, 5000); // Change image every 5 seconds
+
+      return () => clearInterval(interval);
+    }
+  }, [galleryImages]);
 
   const fetchStats = async () => {
     // Count active members
@@ -93,6 +111,17 @@ export default function Home() {
       activeProjects: projectsCount || 0,
       eventsThisMonth: eventsCount || 0
     });
+  };
+
+  const fetchGalleryImages = async () => {
+    const { data } = await supabase
+      .from("gallery_images")
+      .select("id, image_url, title")
+      .order("created_at", { ascending: false });
+
+    if (data && data.length > 0) {
+      setGalleryImages(data);
+    }
   };
 
   const fetchData = async () => {
@@ -136,19 +165,35 @@ export default function Home() {
   };
   return (
     <div>
-      {/* Hero Section */}
+      {/* Hero Section with Auto-Cycling Gallery */}
       <section className="relative h-[500px] overflow-hidden">
-        <img 
-          src={heroImage} 
-          alt="Mbakalo Community" 
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/90 to-primary/70" />
+        {galleryImages.length > 0 ? (
+          galleryImages.map((image, index) => (
+            <div
+              key={image.id}
+              className={`absolute inset-0 transition-opacity duration-1000 ${
+                index === currentImageIndex ? 'opacity-100' : 'opacity-0'
+              }`}
+            >
+              <img 
+                src={image.image_url} 
+                alt={image.title} 
+                className="w-full h-full object-cover"
+              />
+            </div>
+          ))
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-secondary/20" />
+        )}
+        
+        {/* Subtle text background only */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+        
         <div className="relative container mx-auto px-4 h-full flex flex-col justify-center">
-          <h1 className="text-4xl md:text-6xl font-bold text-primary-foreground mb-4">
+          <h1 className="text-4xl md:text-6xl font-bold text-white mb-4 drop-shadow-lg">
             Welcome to Mbakalo Ward
           </h1>
-          <p className="text-xl text-primary-foreground/90 mb-8 max-w-2xl">
+          <p className="text-xl text-white/95 mb-8 max-w-2xl drop-shadow-md">
             Your digital home for community updates, transparent development, and staying connected.
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
@@ -158,7 +203,7 @@ export default function Home() {
                 Donate via M-Pesa
               </Link>
             </Button>
-            <Button size="lg" variant="outline" className="bg-white/10 border-white text-white hover:bg-white/20" asChild>
+            <Button size="lg" variant="outline" className="bg-white/10 backdrop-blur-sm border-white text-white hover:bg-white/20" asChild>
               <Link to="/news">
                 <Newspaper className="mr-2 h-5 w-5" />
                 Latest News
