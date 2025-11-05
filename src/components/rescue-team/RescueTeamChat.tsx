@@ -8,7 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Send, Users, Loader2, Smile, Shield } from "lucide-react";
+import { Send, Users, Loader2, Smile, Shield, X } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -18,6 +18,8 @@ interface Message {
   user_id: string;
   message: string;
   created_at: string;
+  reply_to_message_id?: string | null;
+  replied_message?: Message;
   rescue_team_members?: {
     full_name: string;
     profile_pic_url: string | null;
@@ -38,6 +40,7 @@ export const RescueTeamChat = () => {
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<any>(null);
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -106,9 +109,26 @@ export const RescueTeamChat = () => {
         .select('user_id, full_name, profile_pic_url, role, rank, village, phone_number')
         .in('user_id', userIds);
 
+      // Fetch replied messages
+      const replyIds = chatMessages?.map(m => m.reply_to_message_id).filter(Boolean) || [];
+      let repliedMessages: any[] = [];
+      if (replyIds.length > 0) {
+        const { data } = await supabase
+          .from('rescue_team_chat_messages')
+          .select('*')
+          .in('id', replyIds);
+        repliedMessages = data || [];
+      }
+
       const messagesWithProfiles = chatMessages?.map(msg => ({
         ...msg,
-        rescue_team_members: members?.find(m => m.user_id === msg.user_id)
+        rescue_team_members: members?.find(m => m.user_id === msg.user_id),
+        replied_message: msg.reply_to_message_id 
+          ? {
+              ...repliedMessages.find(r => r.id === msg.reply_to_message_id),
+              rescue_team_members: members?.find(m => m.user_id === repliedMessages.find(r => r.id === msg.reply_to_message_id)?.user_id)
+            }
+          : null
       })) || [];
 
       setMessages(messagesWithProfiles as Message[]);
@@ -143,11 +163,13 @@ export const RescueTeamChat = () => {
         .from('rescue_team_chat_messages')
         .insert({
           user_id: currentUserId,
-          message: newMessage.trim()
+          message: newMessage.trim(),
+          reply_to_message_id: replyingTo?.id || null
         });
 
       if (error) throw error;
       setNewMessage("");
+      setReplyingTo(null);
     } catch (error: any) {
       console.error("Error sending message:", error);
       toast({
@@ -233,7 +255,6 @@ export const RescueTeamChat = () => {
                 const isOwnMessage = msg.user_id === currentUserId;
                 const displayName = getDisplayName(msg);
                 const profilePic = getProfilePic(msg);
-                const member = msg.rescue_team_members;
                 
                 return (
                   <div
@@ -254,12 +275,23 @@ export const RescueTeamChat = () => {
                     
                     <div className={`flex flex-col ${isOwnMessage ? 'items-end' : 'items-start'} max-w-[70%]`}>
                       <div
-                        className={`rounded-2xl px-4 py-2 shadow-sm ${
+                        className={`rounded-2xl px-4 py-2 shadow-sm cursor-pointer hover:shadow-md transition-shadow ${
                           isOwnMessage
                             ? 'bg-red-500 text-white'
                             : 'bg-muted dark:bg-muted/50'
                         }`}
+                        onClick={() => setReplyingTo(msg)}
                       >
+                        {msg.replied_message && (
+                          <div className="bg-black/10 rounded px-2 py-1 mb-2 border-l-2 border-current">
+                            <p className="text-xs opacity-70 font-semibold">
+                              {getDisplayName(msg.replied_message as Message)}
+                            </p>
+                            <p className="text-xs line-clamp-1 opacity-80">
+                              {msg.replied_message.message}
+                            </p>
+                          </div>
+                        )}
                         <p className="text-sm whitespace-pre-wrap break-words">{msg.message}</p>
                       </div>
                       <span className="text-xs text-muted-foreground mt-1">
@@ -273,8 +305,29 @@ export const RescueTeamChat = () => {
           </div>
         </ScrollArea>
 
-        <form onSubmit={handleSendMessage} className="p-4 border-t bg-card">
-          <div className="flex gap-2 items-end">
+        <form onSubmit={handleSendMessage} className="border-t bg-card">
+          {replyingTo && (
+            <div className="px-4 pt-3 pb-2 bg-muted/50 flex items-center justify-between">
+              <div className="flex-1">
+                <p className="text-xs font-semibold text-primary">
+                  Replying to {getDisplayName(replyingTo)}
+                </p>
+                <p className="text-xs line-clamp-1 opacity-70">
+                  {replyingTo.message}
+                </p>
+              </div>
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                className="h-6 w-6"
+                onClick={() => setReplyingTo(null)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+          <div className="p-4 flex gap-2 items-end">
             <Popover open={emojiPickerOpen} onOpenChange={setEmojiPickerOpen}>
               <PopoverTrigger asChild>
                 <Button type="button" variant="ghost" size="icon" className="shrink-0">

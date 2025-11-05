@@ -7,7 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Send, Users, Loader2, Smile } from "lucide-react";
+import { Send, Users, Loader2, Smile, X } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
 import { YouthProfileDialog } from "./YouthProfileDialog";
@@ -17,6 +17,8 @@ interface Message {
   user_id: string;
   message: string;
   created_at: string;
+  reply_to_message_id?: string | null;
+  replied_message?: Message;
   profiles?: {
     full_name: string;
     avatar_url: string | null;
@@ -39,6 +41,7 @@ export const YouthChat = () => {
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<any>(null);
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -53,7 +56,6 @@ export const YouthChat = () => {
   useEffect(() => {
     fetchMessages();
     
-    // Set up realtime subscription
     const channel = supabase
       .channel('youth-chat')
       .on(
@@ -101,7 +103,6 @@ export const YouthChat = () => {
 
       if (messagesError) throw messagesError;
 
-      // Fetch user profiles separately
       const userIds = [...new Set(chatMessages?.map(m => m.user_id) || [])];
       
       const { data: youthProfiles } = await supabase
@@ -114,11 +115,28 @@ export const YouthChat = () => {
         .select('id, full_name, avatar_url')
         .in('id', userIds);
 
-      // Merge the data
+      // Fetch replied messages
+      const replyIds = chatMessages?.map(m => m.reply_to_message_id).filter(Boolean) || [];
+      let repliedMessages: any[] = [];
+      if (replyIds.length > 0) {
+        const { data } = await supabase
+          .from('youth_chat_messages')
+          .select('*')
+          .in('id', replyIds);
+        repliedMessages = data || [];
+      }
+
       const messagesWithProfiles = chatMessages?.map(msg => ({
         ...msg,
         youth_profiles: youthProfiles?.find(p => p.user_id === msg.user_id),
-        profiles: profiles?.find(p => p.id === msg.user_id)
+        profiles: profiles?.find(p => p.id === msg.user_id),
+        replied_message: msg.reply_to_message_id
+          ? {
+              ...repliedMessages.find(r => r.id === msg.reply_to_message_id),
+              youth_profiles: youthProfiles?.find(p => p.user_id === repliedMessages.find(r => r.id === msg.reply_to_message_id)?.user_id),
+              profiles: profiles?.find(p => p.id === repliedMessages.find(r => r.id === msg.reply_to_message_id)?.user_id)
+            }
+          : null
       })) || [];
 
       setMessages(messagesWithProfiles as Message[]);
@@ -153,11 +171,13 @@ export const YouthChat = () => {
         .from('youth_chat_messages')
         .insert({
           user_id: currentUserId,
-          message: newMessage.trim()
+          message: newMessage.trim(),
+          reply_to_message_id: replyingTo?.id || null
         });
 
       if (error) throw error;
       setNewMessage("");
+      setReplyingTo(null);
     } catch (error: any) {
       console.error("Error sending message:", error);
       toast({
@@ -210,7 +230,6 @@ export const YouthChat = () => {
   return (
     <>
       <Card className="flex flex-col h-[600px] bg-card">
-        {/* Chat Header */}
         <div className="p-4 border-b bg-gradient-to-r from-primary/10 to-secondary/10 dark:from-primary/20 dark:to-secondary/20">
           <div className="flex items-center justify-between">
             <div>
@@ -224,7 +243,6 @@ export const YouthChat = () => {
           </div>
         </div>
 
-        {/* Messages Area */}
         <ScrollArea className="flex-1 p-4 bg-background/50" ref={scrollRef}>
           <div className="space-y-4">
             {messages.length === 0 ? (
@@ -256,12 +274,23 @@ export const YouthChat = () => {
                     
                     <div className={`flex flex-col ${isOwnMessage ? 'items-end' : 'items-start'} max-w-[70%]`}>
                       <div
-                        className={`rounded-2xl px-4 py-2 shadow-sm ${
+                        className={`rounded-2xl px-4 py-2 shadow-sm cursor-pointer hover:shadow-md transition-shadow ${
                           isOwnMessage
                             ? 'bg-primary text-primary-foreground'
                             : 'bg-muted dark:bg-muted/50'
                         }`}
+                        onClick={() => setReplyingTo(msg)}
                       >
+                        {msg.replied_message && (
+                          <div className="bg-black/10 rounded px-2 py-1 mb-2 border-l-2 border-current">
+                            <p className="text-xs opacity-70 font-semibold">
+                              {getDisplayName(msg.replied_message as Message)}
+                            </p>
+                            <p className="text-xs line-clamp-1 opacity-80">
+                              {msg.replied_message.message}
+                            </p>
+                          </div>
+                        )}
                         <p className="text-sm whitespace-pre-wrap break-words">{msg.message}</p>
                       </div>
                       <span className="text-xs text-muted-foreground mt-1">
@@ -275,9 +304,29 @@ export const YouthChat = () => {
           </div>
         </ScrollArea>
 
-        {/* Message Input */}
-        <form onSubmit={handleSendMessage} className="p-4 border-t bg-card">
-          <div className="flex gap-2 items-end">
+        <form onSubmit={handleSendMessage} className="border-t bg-card">
+          {replyingTo && (
+            <div className="px-4 pt-3 pb-2 bg-muted/50 flex items-center justify-between">
+              <div className="flex-1">
+                <p className="text-xs font-semibold text-primary">
+                  Replying to {getDisplayName(replyingTo)}
+                </p>
+                <p className="text-xs line-clamp-1 opacity-70">
+                  {replyingTo.message}
+                </p>
+              </div>
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                className="h-6 w-6"
+                onClick={() => setReplyingTo(null)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+          <div className="p-4 flex gap-2 items-end">
             <Popover open={emojiPickerOpen} onOpenChange={setEmojiPickerOpen}>
               <PopoverTrigger asChild>
                 <Button type="button" variant="ghost" size="icon" className="shrink-0">

@@ -674,21 +674,32 @@ export type Database = {
           created_at: string
           id: string
           message: string
+          reply_to_message_id: string | null
           user_id: string
         }
         Insert: {
           created_at?: string
           id?: string
           message: string
+          reply_to_message_id?: string | null
           user_id: string
         }
         Update: {
           created_at?: string
           id?: string
           message?: string
+          reply_to_message_id?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "rescue_team_chat_messages_reply_to_message_id_fkey"
+            columns: ["reply_to_message_id"]
+            isOneToOne: false
+            referencedRelation: "rescue_team_chat_messages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       rescue_team_members: {
         Row: {
@@ -809,21 +820,32 @@ export type Database = {
           created_at: string
           id: string
           message: string
+          reply_to_message_id: string | null
           user_id: string
         }
         Insert: {
           created_at?: string
           id?: string
           message: string
+          reply_to_message_id?: string | null
           user_id: string
         }
         Update: {
           created_at?: string
           id?: string
           message?: string
+          reply_to_message_id?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "youth_chat_messages_reply_to_message_id_fkey"
+            columns: ["reply_to_message_id"]
+            isOneToOne: false
+            referencedRelation: "youth_chat_messages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       youth_opportunities: {
         Row: {
