@@ -217,6 +217,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
                 <li><Link to="/news" className="text-white hover:text-amber-400 transition-colors">Latest News</Link></li>
                 <li><Link to="/events" className="text-white hover:text-amber-400 transition-colors">Upcoming Events</Link></li>
                 <li><Link to="/leaders" className="text-white hover:text-amber-400 transition-colors">Ward Leaders</Link></li>
+                <li><Link to="/install" className="text-white hover:text-amber-400 transition-colors">Install App</Link></li>
               </ul>
             </div>
             <div>

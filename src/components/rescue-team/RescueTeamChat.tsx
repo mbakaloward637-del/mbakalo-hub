@@ -64,8 +64,30 @@ export const RescueTeamChat = () => {
           schema: 'public',
           table: 'rescue_team_chat_messages'
         },
-        () => {
+        async (payload) => {
           fetchMessages();
+          
+          // Show notification if message is from another user
+          if (payload.new.user_id !== currentUserId) {
+            if ('Notification' in window && Notification.permission === 'granted') {
+              // Fetch sender info
+              const { data: sender } = await supabase
+                .from('rescue_team_members')
+                .select('full_name')
+                .eq('user_id', payload.new.user_id)
+                .single();
+
+              const senderName = sender?.full_name || 'Team Member';
+              
+              new Notification('New Rescue Team Message', {
+                body: `${senderName}: ${payload.new.message.substring(0, 100)}`,
+                icon: '/icon-192.png',
+                badge: '/icon-192.png',
+                tag: 'rescue-team-chat',
+                requireInteraction: false
+              });
+            }
+          }
         }
       )
       .on('presence', { event: 'sync' }, () => {

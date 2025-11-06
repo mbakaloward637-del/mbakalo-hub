@@ -65,8 +65,30 @@ export const YouthChat = () => {
           schema: 'public',
           table: 'youth_chat_messages'
         },
-        (payload) => {
+        async (payload) => {
           fetchMessages();
+          
+          // Show notification if message is from another user
+          if (payload.new.user_id !== currentUserId) {
+            if ('Notification' in window && Notification.permission === 'granted') {
+              // Fetch sender info
+              const { data: sender } = await supabase
+                .from('profiles')
+                .select('full_name')
+                .eq('id', payload.new.user_id)
+                .single();
+
+              const senderName = sender?.full_name || 'Youth Member';
+              
+              new Notification('New Youth Chat Message', {
+                body: `${senderName}: ${payload.new.message.substring(0, 100)}`,
+                icon: '/icon-192.png',
+                badge: '/icon-192.png',
+                tag: 'youth-chat',
+                requireInteraction: false
+              });
+            }
+          }
         }
       )
       .on('presence', { event: 'sync' }, () => {
