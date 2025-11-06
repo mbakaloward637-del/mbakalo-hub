@@ -222,7 +222,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
             <div>
               <h3 className="font-bold mb-3 text-amber-400 text-lg">Contact</h3>
               <p className="text-sm text-white">
-                Ward Office Hours: Mon-Fri, 8AM-5PM
+                Rescue Team Office Hours: Mon-Fri, 8AM-5PM
               </p>
             </div>
           </div>

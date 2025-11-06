@@ -51,6 +51,7 @@ export default function Home() {
   const [events, setEvents] = useState<Event[]>([]);
   const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isRescueTeamMember, setIsRescueTeamMember] = useState(false);
   const [stats, setStats] = useState({
     members: 0,
     fundsRaised: 0,
@@ -60,9 +61,26 @@ export default function Home() {
 
   useEffect(() => {
     fetchData();
-    fetchStats();
     fetchGalleryImages();
+    checkRescueTeamMembership();
   }, []);
+
+  const checkRescueTeamMembership = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      const { data } = await supabase
+        .from("rescue_team_members")
+        .select("id")
+        .eq("user_id", session.user.id)
+        .eq("status", "active")
+        .maybeSingle();
+
+      if (data) {
+        setIsRescueTeamMember(true);
+        fetchStats();
+      }
+    }
+  };
 
   useEffect(() => {
     if (galleryImages.length > 0) {
@@ -213,31 +231,33 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Quick Stats */}
-      <section className="container mx-auto px-4 -mt-12 relative z-10">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[
-            { icon: Users, label: "Active Members", value: stats.members.toLocaleString(), color: "bg-primary" },
-            { icon: DollarSign, label: "Funds Raised", value: `KSh ${stats.fundsRaised.toLocaleString()}`, color: "bg-secondary" },
-            { icon: TrendingUp, label: "Projects Active", value: stats.activeProjects.toString(), color: "bg-accent" },
-            { icon: Calendar, label: "Events This Month", value: stats.eventsThisMonth.toString(), color: "bg-primary-light" },
-          ].map((stat, index) => (
-            <Card key={index} className="shadow-medium">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-4">
-                  <div className={`${stat.color} p-3 rounded-lg`}>
-                    <stat.icon className="h-6 w-6 text-white" />
+      {/* Quick Stats - Visible to Rescue Team Only */}
+      {isRescueTeamMember && (
+        <section className="container mx-auto px-4 -mt-12 relative z-10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              { icon: Users, label: "Active Members", value: stats.members.toLocaleString(), color: "bg-primary" },
+              { icon: DollarSign, label: "Funds Raised", value: `KSh ${stats.fundsRaised.toLocaleString()}`, color: "bg-secondary" },
+              { icon: TrendingUp, label: "Projects Active", value: stats.activeProjects.toString(), color: "bg-accent" },
+              { icon: Calendar, label: "Events This Month", value: stats.eventsThisMonth.toString(), color: "bg-primary-light" },
+            ].map((stat, index) => (
+              <Card key={index} className="shadow-medium">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-4">
+                    <div className={`${stat.color} p-3 rounded-lg`}>
+                      <stat.icon className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold">{stat.value}</p>
+                      <p className="text-sm text-muted-foreground">{stat.label}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-2xl font-bold">{stat.value}</p>
-                    <p className="text-sm text-muted-foreground">{stat.label}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Active Fundraising Projects */}
       <section className="container mx-auto px-4 py-16">
