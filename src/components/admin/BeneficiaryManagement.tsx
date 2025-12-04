@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Search, MapPin, Phone, Mail, Calendar, Heart } from "lucide-react";
+import { Plus, Search, MapPin, Phone, Mail, Calendar, Heart, Edit, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Beneficiary {
@@ -29,6 +29,7 @@ interface AssistanceRecord {
   description: string;
   date_provided: string;
   value_estimate?: number;
+  items_provided?: string[];
 }
 
 export const BeneficiaryManagement = () => {
@@ -39,6 +40,7 @@ export const BeneficiaryManagement = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
+  const [isAssistanceDialogOpen, setIsAssistanceDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
@@ -50,6 +52,14 @@ export const BeneficiaryManagement = () => {
     village: "",
     needs: "",
     notes: ""
+  });
+
+  const [assistanceForm, setAssistanceForm] = useState({
+    assistance_type: "",
+    description: "",
+    date_provided: new Date().toISOString().split("T")[0],
+    value_estimate: "",
+    items_provided: ""
   });
 
   useEffect(() => {
@@ -112,6 +122,76 @@ export const BeneficiaryManagement = () => {
       toast({ title: "Error", description: "Failed to add beneficiary", variant: "destructive" });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAddAssistance = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedBeneficiary) return;
+    setLoading(true);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      const { error } = await supabase.from("assistance_records").insert({
+        beneficiary_id: selectedBeneficiary.id,
+        assistance_type: assistanceForm.assistance_type,
+        description: assistanceForm.description,
+        date_provided: assistanceForm.date_provided,
+        value_estimate: assistanceForm.value_estimate ? parseInt(assistanceForm.value_estimate) : null,
+        items_provided: assistanceForm.items_provided ? assistanceForm.items_provided.split(",").map(i => i.trim()) : null,
+        volunteer_id: user?.id
+      });
+
+      if (error) throw error;
+
+      toast({ title: "Success", description: "Assistance record added" });
+      setIsAssistanceDialogOpen(false);
+      setAssistanceForm({
+        assistance_type: "",
+        description: "",
+        date_provided: new Date().toISOString().split("T")[0],
+        value_estimate: "",
+        items_provided: ""
+      });
+      fetchAssistanceHistory(selectedBeneficiary.id);
+    } catch (error) {
+      console.error("Error adding assistance:", error);
+      toast({ title: "Error", description: "Failed to add assistance record", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateStatus = async (beneficiaryId: string, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from("beneficiaries")
+        .update({ status: newStatus })
+        .eq("id", beneficiaryId);
+
+      if (error) throw error;
+      toast({ title: "Status updated" });
+      fetchBeneficiaries();
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to update status", variant: "destructive" });
+    }
+  };
+
+  const handleDeleteBeneficiary = async (beneficiaryId: string) => {
+    if (!confirm("Are you sure you want to delete this beneficiary?")) return;
+
+    try {
+      const { error } = await supabase
+        .from("beneficiaries")
+        .delete()
+        .eq("id", beneficiaryId);
+
+      if (error) throw error;
+      toast({ title: "Beneficiary deleted" });
+      fetchBeneficiaries();
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to delete beneficiary", variant: "destructive" });
     }
   };
 
@@ -226,6 +306,26 @@ export const BeneficiaryManagement = () => {
         </Dialog>
       </div>
 
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card className="p-4">
+          <p className="text-2xl font-bold">{beneficiaries.length}</p>
+          <p className="text-sm text-muted-foreground">Total Beneficiaries</p>
+        </Card>
+        <Card className="p-4">
+          <p className="text-2xl font-bold text-green-600">{beneficiaries.filter(b => b.status === "active").length}</p>
+          <p className="text-sm text-muted-foreground">Active</p>
+        </Card>
+        <Card className="p-4">
+          <p className="text-2xl font-bold text-muted-foreground">{beneficiaries.filter(b => b.status === "inactive").length}</p>
+          <p className="text-sm text-muted-foreground">Inactive</p>
+        </Card>
+        <Card className="p-4">
+          <p className="text-2xl font-bold text-primary">{assistanceHistory.length}</p>
+          <p className="text-sm text-muted-foreground">Assistance Records</p>
+        </Card>
+      </div>
+
       {/* Filters */}
       <Card className="p-4">
         <div className="flex flex-col sm:flex-row gap-4">
@@ -261,14 +361,27 @@ export const BeneficiaryManagement = () => {
               <div className="flex items-start justify-between">
                 <div>
                   <h3 className="font-semibold text-lg">{beneficiary.full_name}</h3>
-                  <span className={`inline-block px-2 py-1 text-xs rounded-full mt-1 ${
-                    beneficiary.status === "active" 
-                      ? "bg-secondary/20 text-secondary" 
-                      : "bg-muted text-muted-foreground"
-                  }`}>
-                    {beneficiary.status}
-                  </span>
+                  <Select 
+                    value={beneficiary.status} 
+                    onValueChange={(value) => handleUpdateStatus(beneficiary.id, value)}
+                  >
+                    <SelectTrigger className="w-24 h-7 mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="inactive">Inactive</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-destructive"
+                  onClick={() => handleDeleteBeneficiary(beneficiary.id)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </div>
 
               <div className="space-y-2 text-sm">
@@ -304,15 +417,28 @@ export const BeneficiaryManagement = () => {
                 </div>
               </div>
 
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="w-full gap-2"
-                onClick={() => handleViewHistory(beneficiary)}
-              >
-                <Heart className="h-4 w-4" />
-                View Assistance History
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1 gap-2"
+                  onClick={() => handleViewHistory(beneficiary)}
+                >
+                  <Heart className="h-4 w-4" />
+                  History
+                </Button>
+                <Button 
+                  size="sm" 
+                  className="flex-1 gap-2"
+                  onClick={() => {
+                    setSelectedBeneficiary(beneficiary);
+                    setIsAssistanceDialogOpen(true);
+                  }}
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Record
+                </Button>
+              </div>
             </div>
           </Card>
         ))}
@@ -347,6 +473,13 @@ export const BeneficiaryManagement = () => {
                         )}
                       </div>
                       <p className="text-sm text-muted-foreground">{record.description}</p>
+                      {record.items_provided && record.items_provided.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {record.items_provided.map((item, i) => (
+                            <span key={i} className="text-xs bg-muted px-2 py-1 rounded">{item}</span>
+                          ))}
+                        </div>
+                      )}
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Calendar className="h-4 w-4" />
                         <span>{new Date(record.date_provided).toLocaleDateString()}</span>
@@ -361,6 +494,87 @@ export const BeneficiaryManagement = () => {
               </p>
             )}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Assistance Dialog */}
+      <Dialog open={isAssistanceDialogOpen} onOpenChange={setIsAssistanceDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              Add Assistance for {selectedBeneficiary?.full_name}
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleAddAssistance} className="space-y-4">
+            <div>
+              <Label htmlFor="assistance_type">Type of Assistance *</Label>
+              <Select 
+                value={assistanceForm.assistance_type} 
+                onValueChange={(value) => setAssistanceForm({ ...assistanceForm, assistance_type: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select type..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Food">Food</SelectItem>
+                  <SelectItem value="Clothing">Clothing</SelectItem>
+                  <SelectItem value="Medical">Medical</SelectItem>
+                  <SelectItem value="Financial">Financial</SelectItem>
+                  <SelectItem value="Shelter">Shelter</SelectItem>
+                  <SelectItem value="Education">Education</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="description">Description *</Label>
+              <Textarea
+                id="description"
+                value={assistanceForm.description}
+                onChange={(e) => setAssistanceForm({ ...assistanceForm, description: e.target.value })}
+                placeholder="Describe the assistance provided..."
+                required
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="items_provided">Items Provided (comma-separated)</Label>
+              <Input
+                id="items_provided"
+                value={assistanceForm.items_provided}
+                onChange={(e) => setAssistanceForm({ ...assistanceForm, items_provided: e.target.value })}
+                placeholder="e.g., Rice, Beans, Cooking oil"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="date_provided">Date *</Label>
+                <Input
+                  id="date_provided"
+                  type="date"
+                  value={assistanceForm.date_provided}
+                  onChange={(e) => setAssistanceForm({ ...assistanceForm, date_provided: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="value_estimate">Value Estimate (KES)</Label>
+                <Input
+                  id="value_estimate"
+                  type="number"
+                  value={assistanceForm.value_estimate}
+                  onChange={(e) => setAssistanceForm({ ...assistanceForm, value_estimate: e.target.value })}
+                  placeholder="0"
+                />
+              </div>
+            </div>
+
+            <Button type="submit" disabled={loading || !assistanceForm.assistance_type} className="w-full">
+              {loading ? "Adding..." : "Add Assistance Record"}
+            </Button>
+          </form>
         </DialogContent>
       </Dialog>
     </div>

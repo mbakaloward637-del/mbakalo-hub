@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DollarSign, TrendingUp, CheckCircle2, Clock } from "lucide-react";
+import { DollarSign, TrendingUp, CheckCircle2, Clock, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -23,7 +23,9 @@ interface Project {
 export default function Fundraising() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [donating, setDonating] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [donorName, setDonorName] = useState("");
   const [amount, setAmount] = useState("");
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
 
@@ -45,19 +47,60 @@ export default function Fundraising() {
     setLoading(false);
   };
 
-  const handleDonate = () => {
-    if (!phoneNumber || !amount || !selectedProject) {
+  const handleDonate = async () => {
+    if (!phoneNumber || !amount || !selectedProject || !donorName) {
       toast.error("Please fill all fields");
       return;
     }
 
-    // Mock M-Pesa STK Push
-    toast.success("M-Pesa prompt sent! Check your phone to complete payment.");
-    
-    // Reset form
-    setPhoneNumber("");
-    setAmount("");
-    setSelectedProject(null);
+    const donationAmount = parseInt(amount);
+    if (isNaN(donationAmount) || donationAmount < 10) {
+      toast.error("Minimum donation is KSh 10");
+      return;
+    }
+
+    setDonating(true);
+
+    try {
+      // Record the donation
+      const { error: donationError } = await supabase
+        .from("donations")
+        .insert({
+          project_id: selectedProject,
+          donor_name: donorName,
+          donor_phone: phoneNumber,
+          amount: donationAmount,
+          status: "completed",
+          transaction_date: new Date().toISOString()
+        });
+
+      if (donationError) throw donationError;
+
+      // Update project raised amount
+      const project = projects.find(p => p.id === selectedProject);
+      if (project) {
+        const { error: updateError } = await supabase
+          .from("projects")
+          .update({ raised_amount: project.raised_amount + donationAmount })
+          .eq("id", selectedProject);
+
+        if (updateError) console.error("Error updating project:", updateError);
+      }
+
+      toast.success("Thank you for your donation! Your contribution has been recorded.");
+      
+      // Reset form and refresh
+      setPhoneNumber("");
+      setDonorName("");
+      setAmount("");
+      setSelectedProject(null);
+      fetchProjects();
+    } catch (error: any) {
+      console.error("Donation error:", error);
+      toast.error(error.message || "Failed to process donation");
+    } finally {
+      setDonating(false);
+    }
   };
 
   const totalRaised = projects.reduce((sum, p) => sum + p.raised_amount, 0);
@@ -251,15 +294,15 @@ export default function Fundraising() {
         <TabsContent value="donate">
           <Card className="shadow-strong max-w-md mx-auto">
             <CardHeader>
-              <CardTitle>Donate via M-Pesa</CardTitle>
-              <CardDescription>Quick and secure mobile money donations</CardDescription>
+              <CardTitle>Make a Donation</CardTitle>
+              <CardDescription>Support our community projects with your contribution</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="project">Select Project</Label>
+                <Label htmlFor="project">Select Project *</Label>
                 <select
                   id="project"
-                  className="w-full h-10 px-3 rounded-md border border-input bg-background"
+                  className="w-full h-11 px-3 rounded-lg border border-input bg-background font-serif"
                   value={selectedProject || ""}
                   onChange={(e) => setSelectedProject(e.target.value)}
                 >
@@ -273,7 +316,18 @@ export default function Fundraising() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="phone">M-Pesa Phone Number</Label>
+                <Label htmlFor="donorName">Your Name *</Label>
+                <Input
+                  id="donorName"
+                  type="text"
+                  placeholder="John Doe"
+                  value={donorName}
+                  onChange={(e) => setDonorName(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone Number *</Label>
                 <Input
                   id="phone"
                   type="tel"
@@ -284,11 +338,12 @@ export default function Fundraising() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="amount">Amount (KSh)</Label>
+                <Label htmlFor="amount">Amount (KSh) *</Label>
                 <Input
                   id="amount"
                   type="number"
                   placeholder="500"
+                  min="10"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                 />
@@ -298,13 +353,23 @@ export default function Fundraising() {
                 className="w-full bg-gradient-primary" 
                 size="lg"
                 onClick={handleDonate}
+                disabled={donating}
               >
-                <DollarSign className="mr-2 h-5 w-5" />
-                Send M-Pesa STK Push
+                {donating ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <DollarSign className="mr-2 h-5 w-5" />
+                    Donate Now
+                  </>
+                )}
               </Button>
 
               <div className="text-xs text-muted-foreground text-center">
-                You will receive an M-Pesa prompt on your phone to complete the payment
+                Your donation will be recorded and you'll be contacted for payment confirmation
               </div>
             </CardContent>
           </Card>
