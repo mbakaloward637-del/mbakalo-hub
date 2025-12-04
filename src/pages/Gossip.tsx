@@ -174,7 +174,7 @@ const GossipNew = () => {
         imageUrl = publicUrl;
       }
 
-      // Insert post
+      // Insert post - publish directly without approval
       const { error: insertError } = await supabase
         .from("posts")
         .insert({
@@ -183,14 +183,14 @@ const GossipNew = () => {
           content: newPost.content,
           category: newPost.category || "General",
           image_url: imageUrl,
-          status: "unverified",
+          status: "verified",
         });
 
       if (insertError) throw insertError;
 
       toast({
-        title: "Success",
-        description: "Your post has been submitted for review",
+        title: "Posted!",
+        description: "Your post is now live",
       });
 
       setNewPost({ title: "", content: "", category: "" });
@@ -279,7 +279,7 @@ const GossipNew = () => {
         <Card className="mb-8">
           <CardHeader>
             <CardTitle>Share Community News</CardTitle>
-            <CardDescription>Your post will be reviewed before being published</CardDescription>
+            <CardDescription>Share what's happening in Mbakalo - your post will be visible immediately</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
