@@ -7,7 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Send, Users, Loader2, Smile, X } from "lucide-react";
+import { Send, Users, Loader2, Smile, X, Trash2, Bell } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
 import { YouthProfileDialog } from "./YouthProfileDialog";
@@ -42,8 +42,17 @@ export const YouthChat = () => {
   const [selectedProfile, setSelectedProfile] = useState<any>(null);
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+
+  // Check notification permission on mount
+  useEffect(() => {
+    if ('Notification' in window) {
+      setNotificationsEnabled(Notification.permission === 'granted');
+    }
+  }, []);
 
   useEffect(() => {
     const getCurrentUser = async () => {
@@ -109,11 +118,46 @@ export const YouthChat = () => {
     };
   }, [currentUserId]);
 
+  // Scroll to bottom when new messages arrive
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  const requestNotificationPermission = async () => {
+    if ('Notification' in window) {
+      const permission = await Notification.requestPermission();
+      setNotificationsEnabled(permission === 'granted');
+      if (permission === 'granted') {
+        toast({
+          title: "Notifications enabled",
+          description: "You'll receive notifications for new messages"
+        });
+      }
+    }
+  };
+
+  const handleDeleteMessage = async (messageId: string) => {
+    try {
+      const { error } = await supabase
+        .from('youth_chat_messages')
+        .delete()
+        .eq('id', messageId)
+        .eq('user_id', currentUserId);
+
+      if (error) throw error;
+      setMessages(messages.filter(m => m.id !== messageId));
+      toast({
+        title: "Message deleted",
+        description: "Your message has been removed"
+      });
+    } catch (error: any) {
+      toast({
+        title: "Failed to delete",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
 
   const fetchMessages = async () => {
     try {
@@ -258,9 +302,22 @@ export const YouthChat = () => {
               <h3 className="font-bold text-lg">Youth Community Chat</h3>
               <p className="text-sm text-muted-foreground">Stay connected with fellow youth</p>
             </div>
-            <div className="flex items-center gap-2 text-sm">
-              <Users className="h-4 w-4 text-primary" />
-              <span className="font-medium">{onlineCount} online</span>
+            <div className="flex items-center gap-3">
+              {!notificationsEnabled && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={requestNotificationPermission}
+                  className="text-xs"
+                >
+                  <Bell className="h-4 w-4 mr-1" />
+                  Enable Notifications
+                </Button>
+              )}
+              <div className="flex items-center gap-2 text-sm">
+                <Users className="h-4 w-4 text-primary" />
+                <span className="font-medium">{onlineCount} online</span>
+              </div>
             </div>
           </div>
         </div>
@@ -295,25 +352,40 @@ export const YouthChat = () => {
                     </Avatar>
                     
                     <div className={`flex flex-col ${isOwnMessage ? 'items-end' : 'items-start'} max-w-[70%]`}>
-                      <div
-                        className={`rounded-2xl px-4 py-2 shadow-sm cursor-pointer hover:shadow-md transition-shadow ${
-                          isOwnMessage
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-muted dark:bg-muted/50'
-                        }`}
-                        onClick={() => setReplyingTo(msg)}
-                      >
-                        {msg.replied_message && (
-                          <div className="bg-black/10 rounded px-2 py-1 mb-2 border-l-2 border-current">
-                            <p className="text-xs opacity-70 font-semibold">
-                              {getDisplayName(msg.replied_message as Message)}
-                            </p>
-                            <p className="text-xs line-clamp-1 opacity-80">
-                              {msg.replied_message.message}
-                            </p>
-                          </div>
+                      <div className="group relative">
+                        <div
+                          className={`rounded-2xl px-4 py-2 shadow-sm cursor-pointer hover:shadow-md transition-shadow ${
+                            isOwnMessage
+                              ? 'bg-primary text-primary-foreground'
+                              : 'bg-muted dark:bg-muted/50'
+                          }`}
+                          onClick={() => setReplyingTo(msg)}
+                        >
+                          {msg.replied_message && (
+                            <div className="bg-black/10 rounded px-2 py-1 mb-2 border-l-2 border-current">
+                              <p className="text-xs opacity-70 font-semibold">
+                                {getDisplayName(msg.replied_message as Message)}
+                              </p>
+                              <p className="text-xs line-clamp-1 opacity-80">
+                                {msg.replied_message.message}
+                              </p>
+                            </div>
+                          )}
+                          <p className="text-sm whitespace-pre-wrap break-words">{msg.message}</p>
+                        </div>
+                        {isOwnMessage && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute -right-8 top-0 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteMessage(msg.id);
+                            }}
+                          >
+                            <Trash2 className="h-3 w-3 text-destructive" />
+                          </Button>
                         )}
-                        <p className="text-sm whitespace-pre-wrap break-words">{msg.message}</p>
                       </div>
                       <span className="text-xs text-muted-foreground mt-1">
                         {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true })}
@@ -323,6 +395,7 @@ export const YouthChat = () => {
                 );
               })
             )}
+            <div ref={messagesEndRef} />
           </div>
         </ScrollArea>
 
